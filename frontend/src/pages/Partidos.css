@@ -1,0 +1,312 @@
+.partidos-container {
+  max-width: 1240px;
+  margin: 1.4rem auto 0;
+  padding: 0 1rem 1rem;
+}
+
+.partidos-container .header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.partidos-container .header h2 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(1.32rem, 3vw, 2rem);
+}
+
+.liga-dia-subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+}
+
+.jornada-selector {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.jornada-selector label {
+  font-weight: 700;
+  color: #149229;
+}
+
+.jornada-select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 0.52rem 0.72rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.canchas-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.cancha-section {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: 0.9rem;
+}
+
+.cancha-titulo {
+  margin: 0 0 0.7rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #ffffff;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.08rem;
+}
+
+.partidos-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.partido-card {
+  border: 1px solid #dbe8f5;
+  border-left: 5px solid #0f4d83;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fcfeff;
+}
+
+.partido-card.jugado {
+  border-left-color: #0f9d73;
+}
+
+.partido-header {
+  padding: 0.58rem 0.7rem;
+  background: #070707cb;
+  border-bottom: 1px solid #e4edf7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.partidos-container .horario {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.24rem 0.58rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  background-color: #000000;
+}
+
+.fecha {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.partido-info {
+  padding: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.equipo-local,
+.equipo-visita {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.equipo-visita {
+  justify-content: flex-end;
+}
+
+.equipo-nombre {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.goles {
+  min-width: 34px;
+  text-align: center;
+  border-radius: 9px;
+  padding: 0.16rem 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  background: #000000;
+}
+
+.vs {
+  color: #000000;
+  font-weight: 800;
+}
+
+.partido-footer {
+  border-top: 1px solid #000000;
+  background: #f8fbff;
+  padding: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-resultado {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.5rem 0.74rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  background: linear-gradient(120deg, #1f8f69 0%, #17a678 100%);
+}
+
+.jugado-badge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0b7a59;
+  background: #e4fbf2;
+  border: 1px solid #b6ecd6;
+  padding: 0.4rem 0.62rem;
+  border-radius: 999px;
+}
+
+.no-partidos {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  border: 1px dashed #cddded;
+  border-radius: 12px;
+  background: #fafcff;
+  padding: 1.2rem;
+}
+
+.partidos-container .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.partidos-container .form-group {
+  margin-bottom: 0.75rem;
+}
+
+.partidos-container .form-group label {
+  display: block;
+  margin-bottom: 0.28rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.88rem;
+}
+
+.partidos-container .form-group input,
+.partidos-container .form-group select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.66rem 0.72rem;
+}
+
+.partidos-container .form-group input:focus,
+.partidos-container .form-group select:focus {
+  outline: 2px solid #beddf7;
+  border-color: #abd4f7;
+}
+
+.partidos-container .horario-help {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.partidos-container .resultado-form {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 0.8rem;
+}
+
+.partidos-container .equipo-resultado {
+  text-align: center;
+}
+
+.partidos-container .equipo-resultado label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.partidos-container .equipo-resultado input {
+  width: 86px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.partidos-container .vs-modal {
+  align-self: center;
+  font-weight: 800;
+  color: #8ca0b8;
+}
+
+.partidos-container .partido-info-modal {
+  margin: 0;
+  border: 1px solid #d6e6f6;
+  border-radius: 10px;
+  background: #f6faff;
+  padding: 0.65rem;
+  text-align: center;
+  color: #335170;
+}
+
+.partidos-container .modal-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 980px) {
+  .canchas-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .partidos-container .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .partidos-container .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .partidos-container .resultado-form {
+    grid-template-columns: 1fr;
+  }
+
+  .partido-info {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .equipo-visita {
+    justify-content: flex-start;
+  }
+
+  .vs {
+    display: none;
+  }
+
+  .partidos-container .modal-actions {
+    flex-direction: column;
+  }
+}

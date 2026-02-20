@@ -1,0 +1,125 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.9rem 1.3rem;
+  background-color: #127412;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 35px rgba(9, 30, 50, 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.nav-brand a {
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-size: 1.65rem;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  color: #ebf6ff;
+  text-decoration: none;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 0.52rem 0.85rem;
+  border-radius: 999px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.nav-access {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.rol-badge {
+  color: #28531400;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: 999px;
+  padding: 0.45rem 0.78rem;
+}
+
+.btn-editor,
+.btn-admin,
+.btn-logout {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.52rem 0.82rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.637);
+  color: #fff;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.btn-editor {
+  background-color:;
+}
+
+.btn-admin {
+}
+
+.btn-logout {
+}
+
+.btn-editor:hover,
+.btn-admin:hover,
+.btn-logout:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1080px) {
+  .navbar {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 0.8rem;
+  }
+
+  .nav-access {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-brand a {
+    font-size: 1.35rem;
+  }
+
+  .nav-links {
+    gap: 0.25rem;
+  }
+
+  .nav-links a {
+    font-size: 0.88rem;
+    padding: 0.45rem 0.66rem;
+  }
+}

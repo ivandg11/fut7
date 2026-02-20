@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+:root {
+  --bg: #000000c4;
+  --bg-soft: #0000007a;
+  --surface: #0000007a;
+  --surface-2: #0000007a;
+  --text: #e8f3ff;
+  --text-muted: #95abc3;
+  --border: #2c4d1f;
+  --brand: #1d8e39;
+  --brand-2: #2ac24d;
+  --success: #22b37f;
+  --warning: #e1a63a;
+  --danger: #ff6f86;
+  --shadow-sm: 0 10px 24px rgba(2, 9, 18, 0.45);
+  --shadow-md: 0 26px 50px rgba(1, 8, 16, 0.62);
+  --radius-md: 14px;
+  --radius-lg: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+  color: var(--text);
+  background-color: #000000e1;
+}
+
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.footer {
+  margin-top: 2rem;
+  padding: 1.15rem 1.5rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.94) 100%
+  );
+}
+
+.footer p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.success-message,
+.error-message {
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.success-message {
+  color: #b7ffdf;
+  background-color: rgba(26, 117, 85, 0.24);
+  border-color: rgba(66, 194, 144, 0.52);
+}
+
+.error-message {
+  color: #ffd2da;
+  background-color: rgba(157, 35, 62, 0.24);
+  border-color: rgba(233, 108, 133, 0.5);
+}
+
+.success-message button,
+.error-message button {
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+
+.liga-selector-loading,
+.liga-selector-error,
+.loading-spinner,
+.no-data {
+  text-align: center;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.liga-selector-error {
+  color: #ffd0d8;
+  border-color: rgba(239, 134, 154, 0.45);
+  background: rgba(145, 31, 56, 0.26);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 12, 24, 0.68);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: min(92vw, 560px);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  padding: 1.4rem;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.28rem;
+}
+
+.access-modal .access-text {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.access-modal .access-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 0.75rem 0.85rem;
+  background: rgba(7, 16, 28, 0.9);
+  color: var(--text);
+  font-size: 0.96rem;
+  letter-spacing: 0.2px;
+}
+
+.access-modal .access-input::placeholder {
+  color: #7e95ae;
+}
+
+.access-modal .access-input:focus {
+  outline: 2px solid rgba(42, 194, 77, 0.35);
+  border-color: #2ac24d;
+}
+
+.btn-primary,
+.btn-secondary {
+  border: 0;
+  border-radius: 11px;
+  padding: 0.72rem 1.12rem;
+  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.btn-primary {
+  color: #ffffff;
+  background: linear-gradient(120deg, var(--brand) 0%, var(--brand-2) 100%);
+}
+
+.btn-secondary {
+  color: var(--text);
+  background: #000000;
+  border: 1px solid var(--brand);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 1rem;
+  }
+
+  .footer p {
+    font-size: 0.88rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+}

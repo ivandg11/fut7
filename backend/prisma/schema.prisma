@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Configuracion {
+  id            Int    @id @default(autoincrement())
+  clave_admin   String
+  clave_editor  String
+  updatedAt     DateTime @updatedAt
+}
+
+model Liga {
+  id        Int      @id @default(autoincrement())
+  dia       String   @unique // LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO
+  nombre    String   // Ej: "Liga de los Lunes", "Liga Martes Nocturna", etc.
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  equipos   Equipo[]
+  partidos  Partido[]
+}
+
+model Equipo {
+  id             Int      @id @default(autoincrement())
+  nombre         String
+  escudo         String?
+  ligaId         Int
+  partidosJugados Int     @default(0)
+  golesFavor     Int      @default(0)
+  golesContra    Int      @default(0)
+  puntos         Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  liga           Liga     @relation(fields: [ligaId], references: [id])
+  partidosLocal  Partido[] @relation("local")
+  partidosVisita Partido[] @relation("visita")
+
+  @@unique([nombre, ligaId])
+}
+
+model Partido {
+  id             Int      @id @default(autoincrement())
+  ligaId         Int
+  equipoLocalId  Int
+  equipoVisitaId Int
+  golesLocal     Int      @default(0)
+  golesVisita    Int      @default(0)
+  fecha          DateTime
+  cancha         Int      @default(1)
+  horario        String   // Ej: "19:00", "20:00", "21:00"
+  jornada        Int      // Número de jornada
+  jugado         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  liga           Liga     @relation(fields: [ligaId], references: [id])
+  equipoLocal    Equipo   @relation("local", fields: [equipoLocalId], references: [id])
+  equipoVisita   Equipo   @relation("visita", fields: [equipoVisitaId], references: [id])
+
+  @@unique([ligaId, equipoLocalId, equipoVisitaId, jornada])
+}

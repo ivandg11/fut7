@@ -1,0 +1,175 @@
+.tabla-container {
+  max-width: 1240px;
+  margin: 1.4rem auto 0;
+  padding: 0 1rem 1rem;
+}
+
+.tabla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.tabla-header h2 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(1.32rem, 3vw, 2rem);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.filtro-btn {
+  border: 1px solid #cbdaeb;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #335170;
+  padding: 0.47rem 0.86rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filtro-btn.active {
+  color: #fff;
+  background-color: #127412;
+  border-color: transparent;
+}
+
+.tabla-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabla-posiciones {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.tabla-posiciones thead {
+  background: linear-gradient(120deg, #000000 0%, #2c2c2c 100%);
+  color: #fff;
+}
+
+.tabla-posiciones th,
+.tabla-posiciones td {
+  padding: 0.8rem 0.55rem;
+  border-bottom: 1px solid #e2ebf5;
+  text-align: center;
+}
+
+.tabla-posiciones th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+}
+
+.tabla-posiciones td {
+  font-size: 0.9rem;
+}
+
+.tabla-posiciones tbody tr:hover {
+  background: #f7fbff;
+}
+
+.tabla-posiciones tbody tr.top-4 {
+  background: #ffffff;
+  color: #000000;
+}
+
+.posicion {
+  font-weight: 800;
+  color: #000;
+}
+
+.tabla-posiciones .equipo-nombre {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  text-align: left;
+  color: #000000;
+}
+
+.ganados {
+  font-weight: 700;
+  color: #0f9d73;
+}
+
+.empatados {
+  font-weight: 700;
+  color: #be7f22;
+}
+
+.perdidos {
+  font-weight: 700;
+  color: #c04258;
+}
+
+.diferencia {
+  font-weight: 700;
+}
+
+.diferencia.positiva {
+  color: #0f9d73;
+}
+
+.diferencia.negativa {
+  color: #c04258;
+}
+
+.tabla-posiciones .puntos {
+  font-weight: 800;
+  color: #0f4c81;
+}
+
+.porcentaje {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.leyenda {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 0.7rem;
+}
+
+.leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.color-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.color-box.top4 {
+  background: #ecf8f3;
+  border: 1px solid #bde8d6;
+}
+
+@media (max-width: 760px) {
+  .tabla-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
