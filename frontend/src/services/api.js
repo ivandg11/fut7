@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://fut7-production.up.railway.app';
+const API_URL = 'https://fut7-production.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_URL,
