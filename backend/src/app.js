@@ -23,12 +23,24 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/ligas', require('./routes/ligas.routes'));
+app.use('/api/temporadas', require('./routes/temporadas.routes'));
 app.use('/api/equipos', require('./routes/equipos.routes'));
+app.use('/api/jugadoras', require('./routes/jugadoras.routes'));
 app.use('/api/partidos', require('./routes/partidos.routes'));
-app.use('/api/config', require('./routes/config.routes'));
+app.use('/api/estadisticas', require('./routes/estadisticas.routes'));
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Servidor funcionando' });
+  res.json({
+    status: 'OK',
+    message: 'SoccerGDL API activa',
+    features: [
+      'JWT por roles',
+      'Multi-liga y temporadas',
+      'CRUD equipos y jugadoras',
+      'Partidos y goles por jugadora',
+      'Tabla de posiciones y goleo en tiempo real',
+    ],
+  });
 });
 
 module.exports = app;

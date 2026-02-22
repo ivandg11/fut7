@@ -1,54 +1,152 @@
-const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const prisma = require('../lib/prisma');
 
-const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '12h';
 
-const obtenerOCrearConfiguracion = async () => {
-  let config = await prisma.configuracion.findFirst();
-  if (!config) {
-    config = await prisma.configuracion.create({
-      data: {
-        clave_admin: 'admin123',
-        clave_editor: 'editor123',
+const signToken = (user) =>
+  jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      ligaId: user.ligaId || null,
+      nombre: user.nombre,
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN },
+  );
+
+const ensureSuperAdmin = async () => {
+  const existing = await prisma.user.findFirst({
+    where: { role: 'SUPER_ADMIN' },
+  });
+  if (existing) return;
+
+  const email = process.env.SUPER_ADMIN_EMAIL || 'superadmin@soccergdl.com';
+  const nombre = process.env.SUPER_ADMIN_NAME || 'Super Admin';
+  const password = process.env.SUPER_ADMIN_PASSWORD || 'ChangeMe123!';
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await prisma.user.create({
+    data: {
+      email,
+      nombre,
+      passwordHash,
+      role: 'SUPER_ADMIN',
+    },
+  });
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email y password son requeridos' });
+    }
+
+    await ensureSuperAdmin();
+
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user || !user.activo) {
+      return res.status(401).json({ message: 'Credenciales invalidas' });
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Credenciales invalidas' });
+    }
+
+    const token = signToken(user);
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        nombre: user.nombre,
+        role: user.role,
+        ligaId: user.ligaId,
       },
     });
-  }
-  return config;
-};
-
-const verificarClave = async (req, res) => {
-  try {
-    const { tipo, clave } = req.body;
-
-    if (!tipo || !clave) {
-      return res.status(400).json({ message: 'Tipo y clave son requeridos' });
-    }
-
-    const config = await obtenerOCrearConfiguracion();
-
-    if (tipo === 'admin') {
-      if (clave !== config.clave_admin) {
-        return res
-          .status(403)
-          .json({ message: 'Clave de administrador invalida' });
-      }
-      return res.json({ message: 'Acceso concedido', rol: 'admin' });
-    }
-
-    if (tipo === 'editor') {
-      if (clave === config.clave_admin) {
-        return res.json({ message: 'Acceso concedido', rol: 'admin' });
-      }
-      if (clave === config.clave_editor) {
-        return res.json({ message: 'Acceso concedido', rol: 'editor' });
-      }
-      return res.status(403).json({ message: 'Clave de editor invalida' });
-    }
-
-    return res.status(400).json({ message: 'Tipo de acceso invalido' });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error en el servidor' });
+    return res.status(500).json({ message: 'Error al iniciar sesion', error: error.message });
   }
 };
 
-module.exports = { verificarClave };
+const getMe = async (req, res) => {
+  try {
+    const userId = req.user?.sub;
+    if (!userId) return res.status(401).json({ message: 'No autenticado' });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, nombre: true, role: true, ligaId: true, activo: true },
+    });
+    if (!user || !user.activo) return res.status(401).json({ message: 'Sesion no valida' });
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al obtener perfil', error: error.message });
+  }
+};
+
+const createLeagueAdmin = async (req, res) => {
+  try {
+    const { email, nombre, password, ligaId } = req.body;
+    if (!email || !nombre || !password || !ligaId) {
+      return res.status(400).json({
+        message: 'email, nombre, password y ligaId son requeridos',
+      });
+    }
+
+    const liga = await prisma.league.findUnique({ where: { id: Number(ligaId) } });
+    if (!liga) return res.status(404).json({ message: 'Liga no encontrada' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase().trim(),
+        nombre: nombre.trim(),
+        passwordHash,
+        role: 'LEAGUE_ADMIN',
+        ligaId: Number(ligaId),
+      },
+      select: { id: true, email: true, nombre: true, role: true, ligaId: true },
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'El correo ya esta registrado' });
+    }
+    return res.status(500).json({ message: 'Error al crear admin de liga', error: error.message });
+  }
+};
+
+const visitorToken = async (_req, res) => {
+  const token = jwt.sign(
+    {
+      sub: null,
+      role: 'VISITOR',
+      nombre: 'Visitante',
+      ligaId: null,
+    },
+    JWT_SECRET,
+    { expiresIn: '24h' },
+  );
+
+  return res.json({
+    token,
+    user: { role: 'VISITOR', nombre: 'Visitante', ligaId: null },
+  });
+};
+
+module.exports = {
+  login,
+  getMe,
+  createLeagueAdmin,
+  visitorToken,
+};

@@ -1,32 +1,30 @@
 const router = require('express').Router();
 const {
-  listTeams,
-  getTeamById,
-  createTeam,
-  updateTeam,
-  deleteTeam,
-} = require('../controllers/equipos.controller');
+  listPlayers,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
+} = require('../controllers/jugadoras.controller');
 const { authRequired, requireRoles } = require('../middleware/auth');
 
-router.get('/', listTeams);
-router.get('/:id', getTeamById);
+router.get('/', listPlayers);
 router.post(
   '/',
   authRequired,
   requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
-  createTeam,
+  createPlayer,
 );
 router.put(
   '/:id',
   authRequired,
   requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
-  updateTeam,
+  updatePlayer,
 );
 router.delete(
   '/:id',
   authRequired,
   requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
-  deleteTeam,
+  deletePlayer,
 );
 
 module.exports = router;

@@ -1,20 +1,30 @@
 const router = require('express').Router();
-const { verificarClaveEditor, publicRoute } = require('../middleware/authClaves');
 const {
-  crearPartido,
-  registrarResultado,
-  obtenerPartidos,
-  obtenerPartidosPorLiga,
-  obtenerJornadas
+  listMatches,
+  createMatch,
+  updateMatch,
+  registerResult,
 } = require('../controllers/partidos.controller');
+const { authRequired, requireRoles } = require('../middleware/auth');
 
-// Rutas públicas
-router.get('/', publicRoute, obtenerPartidos);
-router.get('/jornadas', publicRoute, obtenerJornadas);
-router.get('/liga/:dia', publicRoute, obtenerPartidosPorLiga);
-
-// Rutas para editores y admin
-router.post('/', verificarClaveEditor, crearPartido);
-router.put('/:id/resultado', verificarClaveEditor, registrarResultado);
+router.get('/', listMatches);
+router.post(
+  '/',
+  authRequired,
+  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  createMatch,
+);
+router.put(
+  '/:id',
+  authRequired,
+  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  updateMatch,
+);
+router.post(
+  '/:id/resultado',
+  authRequired,
+  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  registerResult,
+);
 
 module.exports = router;

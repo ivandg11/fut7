@@ -1,6 +1,20 @@
 const router = require('express').Router();
-const { verificarClave } = require('../controllers/auth.controller');
+const {
+  login,
+  getMe,
+  createLeagueAdmin,
+  visitorToken,
+} = require('../controllers/auth.controller');
+const { authRequired, requireRoles } = require('../middleware/auth');
 
-router.post('/verificar-clave', verificarClave);
+router.post('/login', login);
+router.post('/visitor-token', visitorToken);
+router.get('/me', authRequired, getMe);
+router.post(
+  '/league-admin',
+  authRequired,
+  requireRoles('SUPER_ADMIN'),
+  createLeagueAdmin,
+);
 
 module.exports = router;

@@ -7,61 +7,136 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Configuracion {
-  id            Int    @id @default(autoincrement())
-  clave_admin   String
-  clave_editor  String
-  updatedAt     DateTime @updatedAt
+enum UserRole {
+  SUPER_ADMIN
+  LEAGUE_ADMIN
+  VISITOR
 }
 
-model Liga {
-  id        Int      @id @default(autoincrement())
-  dia       String   @unique // LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO
-  nombre    String   // Ej: "Liga de los Lunes", "Liga Martes Nocturna", etc.
-  activa    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  equipos   Equipo[]
-  partidos  Partido[]
+enum LeagueType {
+  VARONIL
+  FEMENIL
+  INFANTIL
 }
 
-model Equipo {
-  id             Int      @id @default(autoincrement())
-  nombre         String
-  escudo         String?
-  ligaId         Int
-  partidosJugados Int     @default(0)
-  golesFavor     Int      @default(0)
-  golesContra    Int      @default(0)
-  puntos         Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  liga           Liga     @relation(fields: [ligaId], references: [id])
-  partidosLocal  Partido[] @relation("local")
-  partidosVisita Partido[] @relation("visita")
-
-  @@unique([nombre, ligaId])
+enum MatchStatus {
+  PROGRAMADO
+  JUGADO
 }
 
-model Partido {
-  id             Int      @id @default(autoincrement())
-  ligaId         Int
-  equipoLocalId  Int
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  nombre       String
+  passwordHash String
+  role         UserRole  @default(VISITOR)
+  ligaId       Int?
+  activo       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  liga         League?   @relation(fields: [ligaId], references: [id])
+}
+
+model League {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  tipo        LeagueType
+  ciudad      String?
+  activa      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  users       User[]
+  temporadas  Season[]
+
+  @@unique([nombre, tipo])
+}
+
+model Season {
+  id          Int       @id @default(autoincrement())
+  ligaId      Int
+  nombre      String
+  anio        Int
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+  activa      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  liga        League    @relation(fields: [ligaId], references: [id], onDelete: Cascade)
+  equipos     Team[]
+  partidos    Match[]
+
+  @@unique([ligaId, nombre])
+}
+
+model Team {
+  id          Int       @id @default(autoincrement())
+  temporadaId Int
+  nombre      String
+  escudoUrl   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  temporada   Season    @relation(fields: [temporadaId], references: [id], onDelete: Cascade)
+  jugadoras   Player[]
+  localias    Match[]   @relation("MatchLocal")
+  visitas     Match[]   @relation("MatchVisita")
+  goles       MatchGoal[]
+
+  @@unique([temporadaId, nombre])
+}
+
+model Player {
+  id          Int       @id @default(autoincrement())
+  equipoId    Int
+  nombre      String
+  dorsal      Int?
+  posicion    String?
+  activa      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  equipo      Team      @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  goles       MatchGoal[]
+}
+
+model Match {
+  id            Int        @id @default(autoincrement())
+  temporadaId   Int
+  equipoLocalId Int
   equipoVisitaId Int
-  golesLocal     Int      @default(0)
-  golesVisita    Int      @default(0)
-  fecha          DateTime
-  cancha         Int      @default(1)
-  horario        String   // Ej: "19:00", "20:00", "21:00"
-  jornada        Int      // Número de jornada
-  jugado         Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  jornada       Int
+  fecha         DateTime
+  cancha        String?
+  status        MatchStatus @default(PROGRAMADO)
+  golesLocal    Int        @default(0)
+  golesVisita   Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  liga           Liga     @relation(fields: [ligaId], references: [id])
-  equipoLocal    Equipo   @relation("local", fields: [equipoLocalId], references: [id])
-  equipoVisita   Equipo   @relation("visita", fields: [equipoVisitaId], references: [id])
+  temporada     Season     @relation(fields: [temporadaId], references: [id], onDelete: Cascade)
+  equipoLocal   Team       @relation("MatchLocal", fields: [equipoLocalId], references: [id], onDelete: Restrict)
+  equipoVisita  Team       @relation("MatchVisita", fields: [equipoVisitaId], references: [id], onDelete: Restrict)
+  goles         MatchGoal[]
 
-  @@unique([ligaId, equipoLocalId, equipoVisitaId, jornada])
+  @@index([temporadaId, jornada])
+}
+
+model MatchGoal {
+  id         Int      @id @default(autoincrement())
+  partidoId  Int
+  jugadoraId Int
+  equipoId   Int
+  minuto     Int?
+  createdAt  DateTime @default(now())
+
+  partido    Match    @relation(fields: [partidoId], references: [id], onDelete: Cascade)
+  jugadora   Player   @relation(fields: [jugadoraId], references: [id], onDelete: Restrict)
+  equipo     Team     @relation(fields: [equipoId], references: [id], onDelete: Restrict)
+
+  @@index([partidoId])
+  @@index([jugadoraId])
+  @@index([equipoId])
 }

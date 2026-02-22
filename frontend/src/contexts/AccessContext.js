@@ -1,116 +1,101 @@
-import React, { createContext, useEffect, useState, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { authAPI } from '../services/api';
 
-const AccessContext = createContext();
+const AccessContext = createContext(null);
 
-export const useAccess = () => useContext(AccessContext);
+export const useAccess = () => {
+  const context = useContext(AccessContext);
+  if (!context) {
+    throw new Error('useAccess debe usarse dentro de AccessProvider');
+  }
+  return context;
+};
 
 export const AccessProvider = ({ children }) => {
-  const [rol, setRol] = useState('publico');
-  const [showAccessModal, setShowAccessModal] = useState(false);
-  const [claveInput, setClaveInput] = useState('');
-  const [tipoAcceso, setTipoAcceso] = useState('');
+  const [user, setUser] = useState(() => {
+    const raw = sessionStorage.getItem('authUser');
+    return raw ? JSON.parse(raw) : null;
+  });
+  const [token, setToken] = useState(sessionStorage.getItem('authToken') || '');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const savedRol = sessionStorage.getItem('userRol');
-    if (savedRol) {
-      setRol(savedRol);
-    }
-  }, []);
+    const bootstrap = async () => {
+      try {
+        if (!token) {
+          const visitor = await authAPI.visitorToken();
+          const visitorToken = visitor.data.token;
+          sessionStorage.setItem('authToken', visitorToken);
+          sessionStorage.setItem('authUser', JSON.stringify(visitor.data.user));
+          setToken(visitorToken);
+          setUser(visitor.data.user);
+          return;
+        }
 
-  const solicitarAcceso = (tipo) => {
-    setTipoAcceso(tipo);
-    setShowAccessModal(true);
-    setClaveInput('');
-  };
+        if (user?.role === 'VISITOR') {
+          return;
+        }
 
-  const verificarClave = async () => {
-    try {
-      const clave = claveInput.trim();
-      if (!clave) {
-        alert('Ingresa una clave');
-        return false;
+        const profile = await authAPI.me();
+        sessionStorage.setItem('authUser', JSON.stringify(profile.data));
+        setUser(profile.data);
+      } catch (_error) {
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('authUser');
+        const visitor = await authAPI.visitorToken();
+        const visitorToken = visitor.data.token;
+        sessionStorage.setItem('authToken', visitorToken);
+        sessionStorage.setItem('authUser', JSON.stringify(visitor.data.user));
+        setToken(visitorToken);
+        setUser(visitor.data.user);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const response = await authAPI.verificarClave(tipoAcceso, clave);
-      const rolValidado = response.data?.rol || tipoAcceso;
+    bootstrap();
+  }, [token, user?.role]);
 
-      setRol(rolValidado);
-      sessionStorage.setItem('userRol', rolValidado);
-      sessionStorage.setItem('userClave', clave);
-      setShowAccessModal(false);
+  const login = async (email, password) => {
+    setError('');
+    try {
+      const response = await authAPI.login(email, password);
+      sessionStorage.setItem('authToken', response.data.token);
+      sessionStorage.setItem('authUser', JSON.stringify(response.data.user));
+      setToken(response.data.token);
+      setUser(response.data.user);
       return true;
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error al verificar clave');
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible iniciar sesion');
       return false;
     }
   };
 
-  const cerrarSesion = () => {
-    setRol('publico');
-    sessionStorage.removeItem('userRol');
-    sessionStorage.removeItem('userClave');
+  const logout = async () => {
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('authUser');
+    const visitor = await authAPI.visitorToken();
+    sessionStorage.setItem('authToken', visitor.data.token);
+    sessionStorage.setItem('authUser', JSON.stringify(visitor.data.user));
+    setToken(visitor.data.token);
+    setUser(visitor.data.user);
   };
 
-  const value = {
-    rol,
-    showAccessModal,
-    setShowAccessModal,
-    claveInput,
-    setClaveInput,
-    tipoAcceso,
-    solicitarAcceso,
-    verificarClave,
-    cerrarSesion,
-  };
-
-  return (
-    <AccessContext.Provider value={value}>
-      {children}
-      <AccessModal />
-    </AccessContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      role: user?.role || 'VISITOR',
+      isAdmin: user?.role === 'SUPER_ADMIN' || user?.role === 'LEAGUE_ADMIN',
+      token,
+      loading,
+      error,
+      setError,
+      login,
+      logout,
+    }),
+    [error, loading, token, user],
   );
-};
 
-const AccessModal = () => {
-  const {
-    showAccessModal,
-    setShowAccessModal,
-    claveInput,
-    setClaveInput,
-    tipoAcceso,
-    verificarClave,
-  } = useAccess();
-
-  if (!showAccessModal) return null;
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content access-modal">
-        <h3>Acceso de {tipoAcceso === 'admin' ? 'Administrador' : 'Editor'}</h3>
-        <p className="access-text">
-          Ingresa la clave para obtener permisos de {tipoAcceso}
-        </p>
-        <input
-          type="password"
-          className="access-input"
-          value={claveInput}
-          onChange={(e) => setClaveInput(e.target.value)}
-          placeholder="Clave de acceso"
-          autoFocus
-        />
-        <div className="modal-actions">
-          <button onClick={verificarClave} className="btn-primary">
-            Acceder
-          </button>
-          <button
-            onClick={() => setShowAccessModal(false)}
-            className="btn-secondary"
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  return <AccessContext.Provider value={value}>{children}</AccessContext.Provider>;
 };

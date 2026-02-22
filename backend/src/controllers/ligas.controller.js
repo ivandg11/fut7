@@ -1,117 +1,82 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
-const LIGAS_POR_DEFECTO = [
-  { dia: 'LUNES', nombre: 'Liga Lunes' },
-  { dia: 'MARTES', nombre: 'Liga Martes' },
-  { dia: 'MIERCOLES', nombre: 'Liga Miercoles' },
-  { dia: 'JUEVES', nombre: 'Liga Jueves' },
-  { dia: 'VIERNES', nombre: 'Liga Viernes' },
-  { dia: 'SABADO', nombre: 'Liga Sabado' },
-];
-
-const asegurarLigasPorDefecto = async () => {
-  const ligasActuales = await prisma.liga.findMany({
-    select: { dia: true },
-  });
-
-  const diasActuales = new Set(ligasActuales.map((liga) => liga.dia));
-  const faltantes = LIGAS_POR_DEFECTO.filter(
-    (liga) => !diasActuales.has(liga.dia),
-  );
-
-  if (faltantes.length > 0) {
-    await prisma.liga.createMany({
-      data: faltantes,
-      skipDuplicates: true,
-    });
-  }
-};
-
-const obtenerLigas = async (req, res) => {
+const listLeagues = async (_req, res) => {
   try {
-    await asegurarLigasPorDefecto();
-
-    const ligas = await prisma.liga.findMany({
-      orderBy: { id: 'asc' },
+    const leagues = await prisma.league.findMany({
+      orderBy: [{ activa: 'desc' }, { nombre: 'asc' }],
     });
-
-    return res.json(ligas);
+    return res.json(leagues);
   } catch (error) {
-    console.error('Error al obtener ligas:', error);
-    return res
-      .status(500)
-      .json({ message: 'Error al obtener ligas', error: error.message });
+    return res.status(500).json({ message: 'Error al listar ligas', error: error.message });
   }
 };
 
-const obtenerLigaPorDia = async (req, res) => {
+const getLeagueById = async (req, res) => {
   try {
-    const { dia } = req.params;
-
-    await asegurarLigasPorDefecto();
-
-    const liga = await prisma.liga.findUnique({
-      where: { dia },
+    const id = Number(req.params.id);
+    const league = await prisma.league.findUnique({
+      where: { id },
+      include: {
+        temporadas: {
+          where: { activa: true },
+          orderBy: [{ anio: 'desc' }, { nombre: 'asc' }],
+        },
+      },
     });
 
-    if (!liga) {
-      return res.status(404).json({ message: 'Liga no encontrada' });
+    if (!league) return res.status(404).json({ message: 'Liga no encontrada' });
+    return res.json(league);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al obtener liga', error: error.message });
+  }
+};
+
+const createLeague = async (req, res) => {
+  try {
+    const { nombre, tipo, ciudad } = req.body;
+    if (!nombre || !tipo) {
+      return res.status(400).json({ message: 'nombre y tipo son requeridos' });
     }
 
-    return res.json(liga);
-  } catch (error) {
-    console.error('Error al obtener liga:', error);
-    return res
-      .status(500)
-      .json({ message: 'Error al obtener liga', error: error.message });
-  }
-};
-
-const crearLiga = async (req, res) => {
-  try {
-    const { dia, nombre } = req.body;
-
-    const liga = await prisma.liga.create({
-      data: { dia, nombre },
+    const league = await prisma.league.create({
+      data: {
+        nombre: nombre.trim(),
+        tipo,
+        ciudad: ciudad?.trim() || null,
+      },
     });
-
-    return res.status(201).json(liga);
+    return res.status(201).json(league);
   } catch (error) {
     if (error.code === 'P2002') {
-      return res
-        .status(400)
-        .json({ message: 'Ya existe una liga para este dia' });
+      return res.status(409).json({ message: 'Ya existe una liga con ese nombre y tipo' });
     }
-    console.error('Error al crear liga:', error);
-    return res
-      .status(500)
-      .json({ message: 'Error al crear liga', error: error.message });
+    return res.status(500).json({ message: 'Error al crear liga', error: error.message });
   }
 };
 
-const actualizarLiga = async (req, res) => {
+const updateLeague = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nombre, activa } = req.body;
-
-    const liga = await prisma.liga.update({
-      where: { id: parseInt(id, 10) },
-      data: { nombre, activa },
+    const id = Number(req.params.id);
+    const { nombre, tipo, ciudad, activa } = req.body;
+    const league = await prisma.league.update({
+      where: { id },
+      data: {
+        ...(nombre !== undefined ? { nombre: nombre.trim() } : {}),
+        ...(tipo !== undefined ? { tipo } : {}),
+        ...(ciudad !== undefined ? { ciudad: ciudad?.trim() || null } : {}),
+        ...(activa !== undefined ? { activa: Boolean(activa) } : {}),
+      },
     });
 
-    return res.json(liga);
+    return res.json(league);
   } catch (error) {
-    console.error('Error al actualizar liga:', error);
-    return res
-      .status(500)
-      .json({ message: 'Error al actualizar liga', error: error.message });
+    return res.status(500).json({ message: 'Error al actualizar liga', error: error.message });
   }
 };
 
 module.exports = {
-  obtenerLigas,
-  obtenerLigaPorDia,
-  crearLiga,
-  actualizarLiga,
+  listLeagues,
+  getLeagueById,
+  createLeague,
+  updateLeague,
 };

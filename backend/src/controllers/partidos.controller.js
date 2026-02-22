@@ -1,205 +1,210 @@
-const { PrismaClient } = require('@prisma/client');
-const { actualizarEstadisticas } = require('./equipos.controller');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
-const crearPartido = async (req, res) => {
+const canManageLeague = (user, ligaId) =>
+  user.role === 'SUPER_ADMIN' ||
+  (user.role === 'LEAGUE_ADMIN' && Number(user.ligaId) === Number(ligaId));
+
+const listMatches = async (req, res) => {
   try {
-    const { ligaId, equipoLocalId, equipoVisitaId, fecha, cancha, horario, jornada } = req.body;
-
-    if (equipoLocalId === equipoVisitaId) {
-      return res.status(400).json({ message: 'Un equipo no puede jugar contra sí mismo' });
+    const temporadaId = Number(req.query.temporadaId);
+    const jornada = req.query.jornada ? Number(req.query.jornada) : null;
+    if (!temporadaId) {
+      return res.status(400).json({ message: 'temporadaId es requerido' });
     }
 
-    // Verificar que los equipos pertenecen a la misma liga
-    const equipoLocal = await prisma.equipo.findUnique({ 
-      where: { id: equipoLocalId },
-      include: { liga: true }
+    const matches = await prisma.match.findMany({
+      where: {
+        temporadaId,
+        ...(jornada ? { jornada } : {}),
+      },
+      include: {
+        equipoLocal: true,
+        equipoVisita: true,
+        goles: {
+          include: { jugadora: true },
+        },
+      },
+      orderBy: [{ jornada: 'asc' }, { fecha: 'asc' }],
     });
-    
-    const equipoVisita = await prisma.equipo.findUnique({ 
-      where: { id: equipoVisitaId },
-      include: { liga: true }
-    });
 
-    if (!equipoLocal || !equipoVisita) {
-      return res.status(404).json({ message: 'Uno o ambos equipos no existen' });
+    return res.json(matches);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al listar partidos', error: error.message });
+  }
+};
+
+const createMatch = async (req, res) => {
+  try {
+    const { temporadaId, equipoLocalId, equipoVisitaId, jornada, fecha, cancha } = req.body;
+    if (!temporadaId || !equipoLocalId || !equipoVisitaId || !jornada || !fecha) {
+      return res.status(400).json({
+        message: 'temporadaId, equipoLocalId, equipoVisitaId, jornada y fecha son requeridos',
+      });
+    }
+    if (Number(equipoLocalId) === Number(equipoVisitaId)) {
+      return res.status(400).json({ message: 'Un equipo no puede jugar contra si mismo' });
     }
 
-    if (equipoLocal.ligaId !== parseInt(ligaId) || equipoVisita.ligaId !== parseInt(ligaId)) {
-      return res.status(400).json({ message: 'Los equipos deben pertenecer a la misma liga' });
+    const season = await prisma.season.findUnique({ where: { id: Number(temporadaId) } });
+    if (!season) return res.status(404).json({ message: 'Temporada no encontrada' });
+    if (!canManageLeague(req.user, season.ligaId)) {
+      return res.status(403).json({ message: 'No puedes crear partidos en esta liga' });
     }
 
-    const partido = await prisma.partido.create({
+    const [local, visita] = await prisma.$transaction([
+      prisma.team.findUnique({ where: { id: Number(equipoLocalId) } }),
+      prisma.team.findUnique({ where: { id: Number(equipoVisitaId) } }),
+    ]);
+
+    if (!local || !visita) return res.status(404).json({ message: 'Equipo local o visitante no existe' });
+    if (local.temporadaId !== Number(temporadaId) || visita.temporadaId !== Number(temporadaId)) {
+      return res.status(400).json({ message: 'Los equipos deben pertenecer a la misma temporada' });
+    }
+
+    const match = await prisma.match.create({
       data: {
-        ligaId: parseInt(ligaId),
-        equipoLocalId,
-        equipoVisitaId,
+        temporadaId: Number(temporadaId),
+        equipoLocalId: Number(equipoLocalId),
+        equipoVisitaId: Number(equipoVisitaId),
+        jornada: Number(jornada),
         fecha: new Date(fecha),
-        cancha,
-        horario,
-        jornada,
-        golesLocal: 0,
-        golesVisita: 0,
-        jugado: false
+        cancha: cancha?.trim() || null,
       },
+      include: { equipoLocal: true, equipoVisita: true },
+    });
+
+    return res.status(201).json(match);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al crear partido', error: error.message });
+  }
+};
+
+const updateMatch = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const existing = await prisma.match.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!existing) return res.status(404).json({ message: 'Partido no encontrado' });
+    if (!canManageLeague(req.user, existing.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes actualizar este partido' });
+    }
+
+    const { jornada, fecha, cancha } = req.body;
+    const updated = await prisma.match.update({
+      where: { id },
+      data: {
+        ...(jornada !== undefined ? { jornada: Number(jornada) } : {}),
+        ...(fecha !== undefined ? { fecha: new Date(fecha) } : {}),
+        ...(cancha !== undefined ? { cancha: cancha?.trim() || null } : {}),
+      },
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al actualizar partido', error: error.message });
+  }
+};
+
+const registerResult = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { goles } = req.body;
+    if (!Array.isArray(goles)) {
+      return res.status(400).json({ message: 'goles debe ser un arreglo [{ jugadoraId, minuto? }]' });
+    }
+
+    const match = await prisma.match.findUnique({
+      where: { id },
       include: {
+        temporada: true,
         equipoLocal: true,
         equipoVisita: true,
-        liga: true
+      },
+    });
+    if (!match) return res.status(404).json({ message: 'Partido no encontrado' });
+    if (!canManageLeague(req.user, match.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes registrar este resultado' });
+    }
+
+    const playerIds = goalsToPlayerIds(goles);
+    const players = playerIds.length
+      ? await prisma.player.findMany({
+          where: { id: { in: playerIds } },
+          include: { equipo: true },
+        })
+      : [];
+    const playersMap = new Map(players.map((p) => [p.id, p]));
+
+    let golesLocal = 0;
+    let golesVisita = 0;
+    const goalsData = [];
+
+    for (const goal of goles) {
+      const jugadoraId = Number(goal.jugadoraId);
+      const player = playersMap.get(jugadoraId);
+      if (!player) {
+        return res.status(400).json({ message: `Jugadora ${jugadoraId} no encontrada` });
       }
-    });
 
-    res.status(201).json(partido);
-  } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(400).json({ message: 'Ya existe un partido entre estos equipos en esta jornada' });
-    }
-    console.error(error);
-    res.status(500).json({ message: 'Error al crear partido' });
-  }
-};
-
-const registrarResultado = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { golesLocal, golesVisita } = req.body;
-
-    const partido = await prisma.partido.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        equipoLocal: true,
-        equipoVisita: true,
-        liga: true
+      const teamId = player.equipoId;
+      if (teamId === match.equipoLocalId) golesLocal += 1;
+      else if (teamId === match.equipoVisitaId) golesVisita += 1;
+      else {
+        return res.status(400).json({
+          message: `La jugadora ${player.nombre} no pertenece a equipos del partido`,
+        });
       }
-    });
 
-    if (!partido) {
-      return res.status(404).json({ message: 'Partido no encontrado' });
+      goalsData.push({
+        partidoId: match.id,
+        jugadoraId,
+        equipoId: teamId,
+        minuto: goal.minuto !== undefined && goal.minuto !== null ? Number(goal.minuto) : null,
+      });
     }
 
-    if (partido.jugado) {
-      return res.status(400).json({ message: 'Este partido ya fue jugado' });
-    }
-
-    // Calcular puntos
-    let puntosLocal = 0, puntosVisita = 0;
-    if (golesLocal > golesVisita) {
-      puntosLocal = 3;
-    } else if (golesLocal < golesVisita) {
-      puntosVisita = 3;
-    } else {
-      puntosLocal = 1;
-      puntosVisita = 1;
-    }
-
-    // Actualizar partido
-    const partidoActualizado = await prisma.partido.update({
-      where: { id: parseInt(id) },
-      data: { golesLocal, golesVisita, jugado: true }
+    const updatedMatch = await prisma.$transaction(async (tx) => {
+      await tx.matchGoal.deleteMany({ where: { partidoId: match.id } });
+      if (goalsData.length) {
+        await tx.matchGoal.createMany({ data: goalsData });
+      }
+      return tx.match.update({
+        where: { id: match.id },
+        data: {
+          golesLocal,
+          golesVisita,
+          status: 'JUGADO',
+        },
+        include: {
+          equipoLocal: true,
+          equipoVisita: true,
+          goles: {
+            include: { jugadora: true },
+          },
+        },
+      });
     });
 
-    // Actualizar estadísticas de los equipos
-    await actualizarEstadisticas(partido.equipoLocalId, golesLocal, golesVisita, puntosLocal);
-    await actualizarEstadisticas(partido.equipoVisitaId, golesVisita, golesLocal, puntosVisita);
-
-    res.json({ 
-      message: 'Resultado registrado exitosamente',
-      partido: partidoActualizado 
-    });
+    return res.json(updatedMatch);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al registrar resultado' });
+    return res.status(500).json({ message: 'Error al registrar resultado', error: error.message });
   }
 };
 
-const obtenerPartidos = async (req, res) => {
-  try {
-    const { ligaId, jornada } = req.query;
-    
-    let where = {};
-    if (ligaId) where.ligaId = parseInt(ligaId);
-    if (jornada) where.jornada = parseInt(jornada);
-    
-    const partidos = await prisma.partido.findMany({
-      where,
-      include: {
-        equipoLocal: true,
-        equipoVisita: true,
-        liga: true
-      },
-      orderBy: [
-        { jornada: 'asc' },
-        { horario: 'asc' }
-      ]
-    });
-    
-    res.json(partidos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener partidos' });
+const goalsToPlayerIds = (goles) => {
+  const ids = [];
+  for (const goal of goles) {
+    const id = Number(goal.jugadoraId);
+    if (Number.isInteger(id) && id > 0) ids.push(id);
   }
-};
-
-const obtenerPartidosPorLiga = async (req, res) => {
-  try {
-    const { dia } = req.params;
-    const { jornada } = req.query;
-    
-    const liga = await prisma.liga.findUnique({
-      where: { dia }
-    });
-    
-    if (!liga) {
-      return res.status(404).json({ message: 'Liga no encontrada' });
-    }
-    
-    let where = { ligaId: liga.id };
-    if (jornada) where.jornada = parseInt(jornada);
-    
-    const partidos = await prisma.partido.findMany({
-      where,
-      include: {
-        equipoLocal: true,
-        equipoVisita: true
-      },
-      orderBy: [
-        { jornada: 'asc' },
-        { horario: 'asc' }
-      ]
-    });
-    
-    res.json({
-      liga,
-      partidos
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener partidos' });
-  }
-};
-
-const obtenerJornadas = async (req, res) => {
-  try {
-    const { ligaId } = req.query;
-    
-    const jornadas = await prisma.partido.findMany({
-      where: { ligaId: parseInt(ligaId) },
-      select: { jornada: true },
-      distinct: ['jornada'],
-      orderBy: { jornada: 'asc' }
-    });
-    
-    res.json(jornadas.map(j => j.jornada));
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener jornadas' });
-  }
+  return [...new Set(ids)];
 };
 
 module.exports = {
-  crearPartido,
-  registrarResultado,
-  obtenerPartidos,
-  obtenerPartidosPorLiga,
-  obtenerJornadas
+  listMatches,
+  createMatch,
+  updateMatch,
+  registerResult,
 };

@@ -1,57 +1,55 @@
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 
-const authMiddleware = (req, res, next) => {
+const authRequired = (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
 
     if (!token) {
-      return res.status(401).json({ message: 'Acceso denegado' });
+      return res.status(401).json({ message: 'Token requerido' });
     }
 
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = verified.id;
-    req.userRole = verified.role;
-    next();
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    return next();
   } catch (error) {
-    res.status(401).json({ message: 'Token inválido' });
+    return res.status(401).json({ message: 'Token invalido' });
   }
 };
 
-// Middleware para verificar roles específicos
-const checkRole = (roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.userRole)) {
-      return res.status(403).json({
-        message: 'No tienes permisos para realizar esta acción',
-      });
-    }
-    next();
-  };
-};
-
-// Middleware para verificar que un SCORER solo registre en sus canchas asignadas
-const checkCanchaAsignada = async (req, res, next) => {
+const optionalAuth = (req, _res, next) => {
   try {
-    if (req.userRole === 'SCORER') {
-      const { canchaId } = req.body;
-      const user = await prisma.user.findUnique({
-        where: { id: req.userId },
-        select: { canchaIds: true },
-      });
-
-      if (!user.canchaIds.includes(canchaId)) {
-        return res.status(403).json({
-          message: 'No estás asignado a esta cancha',
-        });
-      }
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+    if (token) {
+      req.user = jwt.verify(token, JWT_SECRET);
     }
-    next();
-  } catch (error) {
-    res.status(500).json({ message: 'Error verificando permisos' });
+  } catch (_error) {
+    req.user = null;
   }
+  next();
 };
 
-module.exports = { authMiddleware, checkRole, checkCanchaAsignada };
+const requireRoles = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Autenticacion requerida' });
+  }
+
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ message: 'Permisos insuficientes' });
+  }
+
+  return next();
+};
+
+module.exports = {
+  authRequired,
+  optionalAuth,
+  requireRoles,
+};

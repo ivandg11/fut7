@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://fut7-production.up.railway.app/api';
+const API_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -8,103 +9,68 @@ const api = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000,
 });
 
-// Interceptor para logs de request
-api.interceptors.request.use(
-  (config) => {
-    console.log(
-      `📤 ${config.method.toUpperCase()} ${config.url}`,
-      config.data || '',
-    );
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-    const rol = sessionStorage.getItem('userRol');
-    const clave = sessionStorage.getItem('userClave');
-
-    if (rol && clave) {
-      config.headers[`x-clave-${rol}`] = clave;
-      console.log(`🔑 Usando rol: ${rol}`);
-    }
-    return config;
-  },
-  (error) => {
-    console.error('❌ Error en request:', error);
-    return Promise.reject(error);
-  },
-);
-
-// Interceptor para logs de response
-api.interceptors.response.use(
-  (response) => {
-    console.log(`📥 ${response.status} ${response.config.url}`, response.data);
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      console.error(
-        '❌ Error en response:',
-        error.response.status,
-        error.response.data,
-      );
-    } else if (error.request) {
-      console.error('❌ No se recibió respuesta del servidor');
-    } else {
-      console.error('❌ Error:', error.message);
-    }
-    return Promise.reject(error);
-  },
-);
+export const authAPI = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  me: () => api.get('/auth/me'),
+  visitorToken: () => api.post('/auth/visitor-token'),
+  createLeagueAdmin: (data) => api.post('/auth/league-admin', data),
+};
 
 export const ligasAPI = {
   getAll: () => api.get('/ligas'),
-  getByDia: (dia) => api.get(`/ligas/${dia}`),
+  getById: (id) => api.get(`/ligas/${id}`),
   create: (data) => api.post('/ligas', data),
   update: (id, data) => api.put(`/ligas/${id}`, data),
 };
 
+export const temporadasAPI = {
+  getByLiga: (ligaId) => api.get('/temporadas', { params: { ligaId } }),
+  create: (data) => api.post('/temporadas', data),
+  update: (id, data) => api.put(`/temporadas/${id}`, data),
+  remove: (id) => api.delete(`/temporadas/${id}`),
+};
+
 export const equiposAPI = {
-  getAll: (ligaId) => {
-    const params = ligaId ? { params: { ligaId } } : {};
-    return api.get('/equipos', params);
-  },
-  getByLiga: (dia) => {
-    console.log('Obteniendo equipos para día:', dia);
-    return api.get(`/equipos/liga/${dia}`);
-  },
-  create: (data) => {
-    console.log('Creando equipo con data:', data);
-    return api.post('/equipos', data);
-  },
+  getByTemporada: (temporadaId) =>
+    api.get('/equipos', { params: { temporadaId } }),
+  getById: (id) => api.get(`/equipos/${id}`),
+  create: (data) => api.post('/equipos', data),
   update: (id, data) => api.put(`/equipos/${id}`, data),
-  delete: (id) => api.delete(`/equipos/${id}`),
+  remove: (id) => api.delete(`/equipos/${id}`),
+};
+
+export const jugadorasAPI = {
+  getAll: ({ equipoId, temporadaId } = {}) =>
+    api.get('/jugadoras', { params: { equipoId, temporadaId } }),
+  create: (data) => api.post('/jugadoras', data),
+  update: (id, data) => api.put(`/jugadoras/${id}`, data),
+  remove: (id) => api.delete(`/jugadoras/${id}`),
 };
 
 export const partidosAPI = {
-  getAll: (ligaId, jornada) => {
-    const params = {};
-    if (ligaId) params.ligaId = ligaId;
-    if (jornada) params.jornada = jornada;
-    return api.get('/partidos', { params });
-  },
-  getByLiga: (dia, jornada) => {
-    const params = jornada ? { params: { jornada } } : {};
-    return api.get(`/partidos/liga/${dia}`, params);
-  },
-  getJornadas: (ligaId) =>
-    api.get('/partidos/jornadas', { params: { ligaId } }),
+  getByTemporada: (temporadaId, jornada) =>
+    api.get('/partidos', { params: { temporadaId, jornada } }),
   create: (data) => api.post('/partidos', data),
-  registrarResultado: (id, data) => api.put(`/partidos/${id}/resultado`, data),
+  update: (id, data) => api.put(`/partidos/${id}`, data),
+  registrarResultado: (id, data) => api.post(`/partidos/${id}/resultado`, data),
 };
 
-export const configAPI = {
-  get: () => api.get('/config'),
-  updateClaves: (data) => api.put('/config/claves', data),
-};
-
-export const authAPI = {
-  verificarClave: (tipo, clave) =>
-    api.post('/auth/verificar-clave', { tipo, clave }),
+export const estadisticasAPI = {
+  tabla: (temporadaId) =>
+    api.get('/estadisticas/tabla', { params: { temporadaId } }),
+  goleo: (temporadaId) =>
+    api.get('/estadisticas/goleo', { params: { temporadaId } }),
 };
 
 export default api;

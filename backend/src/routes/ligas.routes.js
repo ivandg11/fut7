@@ -1,21 +1,15 @@
 const router = require('express').Router();
 const {
-  verificarClaveAdmin,
-  publicRoute,
-} = require('../middleware/authClaves');
-const {
-  obtenerLigas,
-  obtenerLigaPorDia,
-  crearLiga,
-  actualizarLiga,
+  listLeagues,
+  getLeagueById,
+  createLeague,
+  updateLeague,
 } = require('../controllers/ligas.controller');
+const { authRequired, requireRoles } = require('../middleware/auth');
 
-// Rutas públicas
-router.get('/', publicRoute, obtenerLigas);
-router.get('/:dia', publicRoute, obtenerLigaPorDia);
-
-// Rutas protegidas (solo admin)
-router.post('/', verificarClaveAdmin, crearLiga);
-router.put('/:id', verificarClaveAdmin, actualizarLiga);
+router.get('/', listLeagues);
+router.get('/:id', getLeagueById);
+router.post('/', authRequired, requireRoles('SUPER_ADMIN'), createLeague);
+router.put('/:id', authRequired, requireRoles('SUPER_ADMIN'), updateLeague);
 
 module.exports = router;

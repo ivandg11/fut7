@@ -1,75 +1,104 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { ligasAPI } from '../services/api';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { ligasAPI, temporadasAPI } from '../services/api';
 
-const LigaContext = createContext();
+const LigaContext = createContext(null);
 
 export const useLiga = () => {
   const context = useContext(LigaContext);
   if (!context) {
-    throw new Error('useLiga debe ser usado dentro de LigaProvider');
+    throw new Error('useLiga debe usarse dentro de LigaProvider');
   }
   return context;
 };
 
 export const LigaProvider = ({ children }) => {
   const [ligas, setLigas] = useState([]);
-  const [ligaActual, setLigaActual] = useState(null);
+  const [ligaActualId, setLigaActualId] = useState(null);
+  const [temporadas, setTemporadas] = useState([]);
+  const [temporadaActualId, setTemporadaActualId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [jornadaActual, setJornadaActual] = useState(1);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    cargarLigas();
-  }, []);
+  const ligaActual = ligas.find((l) => l.id === ligaActualId) || null;
+  const temporadaActual = temporadas.find((t) => t.id === temporadaActualId) || null;
 
   const cargarLigas = async () => {
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      console.log('Cargando ligas...');
       const response = await ligasAPI.getAll();
-      console.log('Ligas cargadas:', response.data);
-      setLigas(response.data);
-      
-      // Seleccionar la primera liga por defecto (Lunes)
-      if (response.data.length > 0 && !ligaActual) {
-        console.log('Seleccionando liga por defecto:', response.data[0]);
-        setLigaActual(response.data[0]);
+      const leagues = response.data;
+      setLigas(leagues);
+
+      if (leagues.length === 0) {
+        setLigaActualId(null);
+        setTemporadas([]);
+        setTemporadaActualId(null);
+        return;
       }
-      setError(null);
-    } catch (error) {
-      console.error('Error al cargar ligas:', error);
-      setError('Error al cargar las ligas');
+
+      const selectedLigaId =
+        leagues.some((l) => l.id === ligaActualId) ? ligaActualId : leagues[0].id;
+      setLigaActualId(selectedLigaId);
+      await cargarTemporadas(selectedLigaId);
+    } catch (_error) {
+      setError('No fue posible cargar ligas');
     } finally {
       setLoading(false);
     }
   };
 
-  const seleccionarLiga = (dia) => {
-    console.log('Seleccionando liga con día:', dia);
-    const liga = ligas.find(l => l.dia === dia);
-    if (liga) {
-      console.log('Liga encontrada:', liga);
-      setLigaActual(liga);
-      setJornadaActual(1);
-    } else {
-      console.log('No se encontró liga para el día:', dia);
+  const cargarTemporadas = async (ligaId) => {
+    if (!ligaId) return;
+    try {
+      const response = await temporadasAPI.getByLiga(ligaId);
+      const seasons = response.data;
+      setTemporadas(seasons);
+
+      if (seasons.length === 0) {
+        setTemporadaActualId(null);
+        return;
+      }
+
+      const activa = seasons.find((season) => season.activa);
+      const nextTemporadaId =
+        seasons.some((season) => season.id === temporadaActualId)
+          ? temporadaActualId
+          : (activa?.id || seasons[0].id);
+
+      setTemporadaActualId(nextTemporadaId);
+    } catch (_error) {
+      setTemporadas([]);
+      setTemporadaActualId(null);
+      setError('No fue posible cargar temporadas');
     }
   };
 
-  const value = {
-    ligas,
-    ligaActual,
-    loading,
-    error,
-    jornadaActual,
-    setJornadaActual,
-    seleccionarLiga,
-    cargarLigas
+  const seleccionarLiga = async (ligaId) => {
+    setLigaActualId(Number(ligaId));
+    await cargarTemporadas(Number(ligaId));
   };
 
-  return (
-    <LigaContext.Provider value={value}>
-      {children}
-    </LigaContext.Provider>
+  useEffect(() => {
+    cargarLigas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      ligas,
+      ligaActual,
+      temporadas,
+      temporadaActual,
+      loading,
+      error,
+      cargarLigas,
+      cargarTemporadas,
+      seleccionarLiga,
+      seleccionarTemporada: (id) => setTemporadaActualId(Number(id)),
+    }),
+    [error, ligaActual, ligas, loading, temporadaActual, temporadas],
   );
+
+  return <LigaContext.Provider value={value}>{children}</LigaContext.Provider>;
 };

@@ -1,200 +1,129 @@
-﻿const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
-const crearEquipo = async (req, res) => {
+const canManageLeague = (user, ligaId) =>
+  user.role === 'SUPER_ADMIN' ||
+  (user.role === 'LEAGUE_ADMIN' && Number(user.ligaId) === Number(ligaId));
+
+const listTeams = async (req, res) => {
   try {
-    const { nombre, ligaId } = req.body;
-
-    console.log(`ðŸ“¥ Creando equipo: ${nombre} para liga ID: ${ligaId}`);
-
-    // Validaciones
-    if (!nombre || !ligaId) {
-      return res
-        .status(400)
-        .json({ message: 'Nombre y ligaId son requeridos' });
+    const temporadaId = Number(req.query.temporadaId);
+    if (!temporadaId) {
+      return res.status(400).json({ message: 'temporadaId es requerido' });
     }
 
-    // Verificar que la liga existe
-    const liga = await prisma.liga.findUnique({
-      where: { id: parseInt(ligaId) },
-    });
-
-    if (!liga) {
-      console.log(`âŒ Liga no encontrada ID: ${ligaId}`);
-      return res.status(404).json({ message: 'Liga no encontrada' });
-    }
-
-    const equipo = await prisma.equipo.create({
-      data: {
-        nombre,
-        ligaId: parseInt(ligaId),
-        partidosJugados: 0,
-        golesFavor: 0,
-        golesContra: 0,
-        puntos: 0,
+    const teams = await prisma.team.findMany({
+      where: { temporadaId },
+      include: {
+        _count: {
+          select: { jugadoras: true },
+        },
       },
-      include: { liga: true },
+      orderBy: { nombre: 'asc' },
     });
 
-    console.log(`âœ… Equipo creado: ${equipo.nombre}`);
-    res.status(201).json(equipo);
+    return res.json(teams);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al listar equipos', error: error.message });
+  }
+};
+
+const getTeamById = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: { temporada: true, jugadoras: { where: { activa: true }, orderBy: { nombre: 'asc' } } },
+    });
+    if (!team) return res.status(404).json({ message: 'Equipo no encontrado' });
+    return res.json(team);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al obtener equipo', error: error.message });
+  }
+};
+
+const createTeam = async (req, res) => {
+  try {
+    const { temporadaId, nombre, escudoUrl } = req.body;
+    if (!temporadaId || !nombre) {
+      return res.status(400).json({ message: 'temporadaId y nombre son requeridos' });
+    }
+
+    const season = await prisma.season.findUnique({ where: { id: Number(temporadaId) } });
+    if (!season) return res.status(404).json({ message: 'Temporada no encontrada' });
+
+    if (!canManageLeague(req.user, season.ligaId)) {
+      return res.status(403).json({ message: 'No puedes crear equipos en esta liga' });
+    }
+
+    const team = await prisma.team.create({
+      data: {
+        temporadaId: Number(temporadaId),
+        nombre: nombre.trim(),
+        escudoUrl: escudoUrl?.trim() || null,
+      },
+    });
+
+    return res.status(201).json(team);
   } catch (error) {
     if (error.code === 'P2002') {
-      return res
-        .status(400)
-        .json({ message: 'Ya existe un equipo con ese nombre en esta liga' });
+      return res.status(409).json({ message: 'Ya existe ese equipo en la temporada' });
     }
-    console.error('âŒ Error al crear equipo:', error);
-    res
-      .status(500)
-      .json({ message: 'Error al crear equipo', error: error.message });
+    return res.status(500).json({ message: 'Error al crear equipo', error: error.message });
   }
 };
 
-const obtenerEquipos = async (req, res) => {
+const updateTeam = async (req, res) => {
   try {
-    const { ligaId } = req.query;
+    const id = Number(req.params.id);
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!team) return res.status(404).json({ message: 'Equipo no encontrado' });
 
-    console.log(`ðŸ“¥ Obteniendo equipos para liga ID: ${ligaId || 'todas'}`);
-
-    let where = {};
-    if (ligaId) {
-      where.ligaId = parseInt(ligaId);
+    if (!canManageLeague(req.user, team.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes actualizar este equipo' });
     }
 
-    const equipos = await prisma.equipo.findMany({
-      where,
-      include: { liga: true },
-      orderBy: [{ puntos: 'desc' }, { golesFavor: 'desc' }],
-    });
-
-    console.log(`âœ… ${equipos.length} equipos encontrados`);
-    res.json(equipos);
-  } catch (error) {
-    console.error('âŒ Error al obtener equipos:', error);
-    res
-      .status(500)
-      .json({ message: 'Error al obtener equipos', error: error.message });
-  }
-};
-
-const obtenerEquiposPorLiga = async (req, res) => {
-  try {
-    const { dia } = req.params;
-
-    console.log(`ðŸ“¥ Obteniendo equipos para liga dÃ­a: ${dia}`);
-
-    // Primero obtener la liga por el dÃ­a
-    const liga = await prisma.liga.findUnique({
-      where: { dia },
-    });
-
-    if (!liga) {
-      console.log(`âŒ Liga no encontrada para el dÃ­a: ${dia}`);
-      return res.status(404).json({ message: 'Liga no encontrada' });
-    }
-
-    console.log(`âœ… Liga encontrada: ${liga.nombre} (ID: ${liga.id})`);
-
-    const equipos = await prisma.equipo.findMany({
-      where: { ligaId: liga.id },
-      orderBy: [{ puntos: 'desc' }, { golesFavor: 'desc' }],
-    });
-
-    console.log(`âœ… ${equipos.length} equipos encontrados para ${dia}`);
-    res.json(equipos);
-  } catch (error) {
-    console.error('âŒ Error al obtener equipos por liga:', error);
-    res
-      .status(500)
-      .json({ message: 'Error al obtener equipos', error: error.message });
-  }
-};
-
-const actualizarEquipo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { nombre } = req.body;
-
-    console.log(`ðŸ“¥ Actualizando equipo ID: ${id}`);
-
-    const equipo = await prisma.equipo.update({
-      where: { id: parseInt(id) },
-      data: { nombre },
-      include: { liga: true },
-    });
-
-    console.log(`âœ… Equipo actualizado: ${equipo.nombre}`);
-    res.json(equipo);
-  } catch (error) {
-    console.error('âŒ Error al actualizar equipo:', error);
-    res
-      .status(500)
-      .json({ message: 'Error al actualizar equipo', error: error.message });
-  }
-};
-
-const eliminarEquipo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const equipoId = parseInt(id);
-
-    console.log(`📥 Eliminando equipo ID: ${equipoId}`);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.partido.deleteMany({
-        where: {
-          OR: [{ equipoLocalId: equipoId }, { equipoVisitaId: equipoId }],
-        },
-      });
-
-      await tx.equipo.delete({
-        where: { id: equipoId },
-      });
-    });
-
-    console.log(`✅ Equipo eliminado ID: ${equipoId}`);
-    res.json({ message: 'Equipo eliminado exitosamente' });
-  } catch (error) {
-    console.error('❌ Error al eliminar equipo:', error);
-    res
-      .status(500)
-      .json({ message: 'Error al eliminar equipo', error: error.message });
-  }
-};
-const actualizarEstadisticas = async (
-  equipoId,
-  golesFavor,
-  golesContra,
-  puntosGanados,
-) => {
-  try {
-    console.log(`ðŸ“¥ Actualizando estadÃ­sticas equipo ID: ${equipoId}`);
-
-    const equipo = await prisma.equipo.update({
-      where: { id: equipoId },
+    const { nombre, escudoUrl } = req.body;
+    const updated = await prisma.team.update({
+      where: { id },
       data: {
-        partidosJugados: { increment: 1 },
-        golesFavor: { increment: golesFavor },
-        golesContra: { increment: golesContra },
-        puntos: { increment: puntosGanados },
+        ...(nombre !== undefined ? { nombre: nombre.trim() } : {}),
+        ...(escudoUrl !== undefined ? { escudoUrl: escudoUrl?.trim() || null } : {}),
       },
     });
 
-    console.log(`âœ… EstadÃ­sticas actualizadas para: ${equipo.nombre}`);
-    return equipo;
+    return res.json(updated);
   } catch (error) {
-    console.error('âŒ Error al actualizar estadÃ­sticas:', error);
-    throw error;
+    return res.status(500).json({ message: 'Error al actualizar equipo', error: error.message });
+  }
+};
+
+const deleteTeam = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!team) return res.status(404).json({ message: 'Equipo no encontrado' });
+
+    if (!canManageLeague(req.user, team.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes eliminar este equipo' });
+    }
+
+    await prisma.team.delete({ where: { id } });
+    return res.json({ message: 'Equipo eliminado' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al eliminar equipo', error: error.message });
   }
 };
 
 module.exports = {
-  crearEquipo,
-  obtenerEquipos,
-  obtenerEquiposPorLiga,
-  actualizarEquipo,
-  eliminarEquipo,
-  actualizarEstadisticas,
+  listTeams,
+  getTeamById,
+  createTeam,
+  updateTeam,
+  deleteTeam,
 };
-
