@@ -49,7 +49,9 @@ const Partidos = () => {
       const response = await partidosAPI.getByTemporada(temporadaActual.id);
       setPartidos(response.data);
     } catch (err) {
-      setError(`No fue posible cargar partidos: ${extractApiErrorMessage(err)}`);
+      setError(
+        `No fue posible cargar partidos: ${extractApiErrorMessage(err)}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -111,13 +113,17 @@ const Partidos = () => {
       setOk('Partido programado.');
       await cargarPartidos();
     } catch (err) {
-      setError(`No fue posible programar partido: ${extractApiErrorMessage(err)}`);
+      setError(
+        `No fue posible programar partido: ${extractApiErrorMessage(err)}`,
+      );
     }
   };
 
   const abrirEditor = (partido) => {
     const jugadorasPartido = jugadoras.filter(
-      (j) => j.equipoId === partido.equipoLocalId || j.equipoId === partido.equipoVisitaId,
+      (j) =>
+        j.equipoId === partido.equipoLocalId ||
+        j.equipoId === partido.equipoVisitaId,
     );
     const asistenciaInicial = {};
     jugadorasPartido.forEach((j) => {
@@ -144,7 +150,10 @@ const Partidos = () => {
     setJugadoraGolId('');
   };
 
-  const jugadorasPorId = useMemo(() => new Map(jugadoras.map((j) => [j.id, j])), [jugadoras]);
+  const jugadorasPorId = useMemo(
+    () => new Map(jugadoras.map((j) => [j.id, j])),
+    [jugadoras],
+  );
   const jornadasDisponibles = useMemo(
     () =>
       [...new Set(partidos.map((partido) => Number(partido.jornada)))]
@@ -154,12 +163,17 @@ const Partidos = () => {
   );
   const partidosFiltrados = useMemo(() => {
     if (jornadaSeleccionada === 'TODAS') return partidos;
-    return partidos.filter((partido) => Number(partido.jornada) === Number(jornadaSeleccionada));
+    return partidos.filter(
+      (partido) => Number(partido.jornada) === Number(jornadaSeleccionada),
+    );
   }, [partidos, jornadaSeleccionada]);
 
   const jugadorasParaEquipo = (partido) => {
-    const teamId = equipoGol === 'local' ? partido.equipoLocalId : partido.equipoVisitaId;
-    return jugadoras.filter((j) => j.equipoId === teamId && asistenciaEditor[j.id]);
+    const teamId =
+      equipoGol === 'local' ? partido.equipoLocalId : partido.equipoVisitaId;
+    return jugadoras.filter(
+      (j) => j.equipoId === teamId && asistenciaEditor[j.id],
+    );
   };
 
   const jugadorasPorEquipoEnPartido = (partido) => ({
@@ -168,7 +182,10 @@ const Partidos = () => {
   });
 
   const toggleAsistencia = (jugadoraId) => {
-    setAsistenciaEditor((prev) => ({ ...prev, [jugadoraId]: !prev[jugadoraId] }));
+    setAsistenciaEditor((prev) => ({
+      ...prev,
+      [jugadoraId]: !prev[jugadoraId],
+    }));
   };
 
   const agregarGol = () => {
@@ -193,14 +210,20 @@ const Partidos = () => {
     setError('');
     setOk('');
     try {
-      const response = await partidosAPI.registrarResultado(partidoId, { goles: golesEditor });
+      const response = await partidosAPI.registrarResultado(partidoId, {
+        goles: golesEditor,
+      });
       setPartidos((prev) =>
-        prev.map((partido) => (partido.id === partidoId ? response.data : partido)),
+        prev.map((partido) =>
+          partido.id === partidoId ? response.data : partido,
+        ),
       );
       setOk('Resultado guardado.');
       cerrarEditor();
     } catch (err) {
-      setError(`No fue posible guardar resultado: ${extractApiErrorMessage(err)}`);
+      setError(
+        `No fue posible guardar resultado: ${extractApiErrorMessage(err)}`,
+      );
     }
   };
 
@@ -221,9 +244,13 @@ const Partidos = () => {
       <LigaSelector />
       <header className="partidos-header">
         <h2>
-          Partidos: {ligaActual?.nombre} {temporadaActual ? `- ${temporadaActual.nombre}` : ''}
+          Partidos: {ligaActual?.nombre}{' '}
+          {temporadaActual ? `- ${temporadaActual.nombre}` : ''}
         </h2>
-        <p>Control de jornadas, resultados y seguimiento operativo en una sola vista.</p>
+        <p>
+          Control de jornadas, resultados y seguimiento operativo en una sola
+          vista.
+        </p>
       </header>
 
       {error && <div className="error-message">{error}</div>}
@@ -240,7 +267,9 @@ const Partidos = () => {
                 type="number"
                 min="1"
                 value={partidoForm.jornada}
-                onChange={(e) => setPartidoForm({ ...partidoForm, jornada: e.target.value })}
+                onChange={(e) =>
+                  setPartidoForm({ ...partidoForm, jornada: e.target.value })
+                }
                 required
               />
             </div>
@@ -249,7 +278,9 @@ const Partidos = () => {
               <input
                 type="datetime-local"
                 value={partidoForm.fecha}
-                onChange={(e) => setPartidoForm({ ...partidoForm, fecha: e.target.value })}
+                onChange={(e) =>
+                  setPartidoForm({ ...partidoForm, fecha: e.target.value })
+                }
                 required
               />
             </div>
@@ -257,7 +288,9 @@ const Partidos = () => {
               <label>Cancha</label>
               <select
                 value={partidoForm.cancha}
-                onChange={(e) => setPartidoForm({ ...partidoForm, cancha: e.target.value })}
+                onChange={(e) =>
+                  setPartidoForm({ ...partidoForm, cancha: e.target.value })
+                }
                 required
               >
                 <option value="">Selecciona cancha</option>
@@ -272,7 +305,12 @@ const Partidos = () => {
               <label>Equipo Local</label>
               <select
                 value={partidoForm.equipoLocalId}
-                onChange={(e) => setPartidoForm({ ...partidoForm, equipoLocalId: e.target.value })}
+                onChange={(e) =>
+                  setPartidoForm({
+                    ...partidoForm,
+                    equipoLocalId: e.target.value,
+                  })
+                }
                 required
               >
                 <option value="">Selecciona equipo</option>
@@ -287,7 +325,12 @@ const Partidos = () => {
               <label>Equipo Visita</label>
               <select
                 value={partidoForm.equipoVisitaId}
-                onChange={(e) => setPartidoForm({ ...partidoForm, equipoVisitaId: e.target.value })}
+                onChange={(e) =>
+                  setPartidoForm({
+                    ...partidoForm,
+                    equipoVisitaId: e.target.value,
+                  })
+                }
                 required
               >
                 <option value="">Selecciona equipo</option>
@@ -338,39 +381,62 @@ const Partidos = () => {
             : partido.status === 'JUGADO'
               ? 'is-finalizado'
               : 'is-programado';
-          const estadoTexto = isLive ? 'En vivo' : partido.status === 'JUGADO' ? 'Finalizado' : 'Programado';
+          const estadoTexto = isLive
+            ? 'En vivo'
+            : partido.status === 'JUGADO'
+              ? 'Finalizado'
+              : 'Programado';
 
           return (
-            <div key={partido.id} className={`partido-card ${partido.status === 'JUGADO' ? 'jugado' : ''}`}>
+            <div
+              key={partido.id}
+              className={`partido-card ${partido.status === 'JUGADO' ? 'jugado' : ''}`}
+            >
               <div className="partido-header">
                 <span className="partido-meta">Jornada {partido.jornada}</span>
-                <span className="partido-fecha">{formatFecha(partido.fecha)}</span>
-                <span className={`estado-pill ${estadoClase}`}>{estadoTexto}</span>
+                <span className="partido-fecha">
+                  {formatFecha(partido.fecha)}
+                </span>
+                <span className={`estado-pill ${estadoClase}`}>
+                  {estadoTexto}
+                </span>
               </div>
               <div className="partido-info">
-                <span className="team-name local">{partido.equipoLocal.nombre}</span>
+                <span className="team-name local">
+                  {partido.equipoLocal.nombre}
+                </span>
                 <div className="scoreboard">
-                  <span className="score score-animate" key={`${partido.id}-${marcador.local}-${marcador.visita}`}>
+                  <span
+                    className="score score-animate"
+                    key={`${partido.id}-${marcador.local}-${marcador.visita}`}
+                  >
                     {marcador.local} - {marcador.visita}
                   </span>
                   <span className="score-label">Marcador</span>
                 </div>
-                <span className="team-name visita">{partido.equipoVisita.nombre}</span>
+                <span className="team-name visita">
+                  {partido.equipoVisita.nombre}
+                </span>
               </div>
 
               {isAdmin && (
                 <div className="partido-admin">
                   {editorPartidoId !== partido.id ? (
-                    <button className="btn-primary" onClick={() => abrirEditor(partido)}>
-                      {partido.status === 'PROGRAMADO' ? 'Iniciar Partido' : 'Gestionar Resultado'}
+                    <button
+                      className="btn-primary"
+                      onClick={() => abrirEditor(partido)}
+                    >
+                      {partido.status === 'PROGRAMADO'
+                        ? 'Iniciar Partido'
+                        : 'Gestionar Resultado'}
                     </button>
                   ) : (
                     <div className="resultado-editor">
                       <h4>Resultado en vivo</h4>
                       <div className="score-live">
                         <span>
-                          {partido.equipoLocal.nombre} {marcador.local} - {marcador.visita}{' '}
-                          {partido.equipoVisita.nombre}
+                          {partido.equipoLocal.nombre} {marcador.local} -{' '}
+                          {marcador.visita} {partido.equipoVisita.nombre}
                         </span>
                       </div>
 
@@ -381,53 +447,89 @@ const Partidos = () => {
                             <>
                               <div className="asistencia-col">
                                 <div className="asistencia-head">
-                                  {partido.equipoLocal.nombre} ({listas.local.filter((j) => asistenciaEditor[j.id]).length}/
-                                  {listas.local.length})
+                                  {partido.equipoLocal.nombre} (
+                                  {
+                                    listas.local.filter(
+                                      (j) => asistenciaEditor[j.id],
+                                    ).length
+                                  }
+                                  /{listas.local.length})
                                 </div>
                                 <ul className="asistencia-list">
                                   {listas.local.map((jugadora) => (
-                                    <li key={jugadora.id} className="asistencia-item">
+                                    <li
+                                      key={jugadora.id}
+                                      className="asistencia-item"
+                                    >
                                       <label>
                                         <input
                                           type="checkbox"
-                                          checked={!!asistenciaEditor[jugadora.id]}
-                                          onChange={() => toggleAsistencia(jugadora.id)}
+                                          checked={
+                                            !!asistenciaEditor[jugadora.id]
+                                          }
+                                          onChange={() =>
+                                            toggleAsistencia(jugadora.id)
+                                          }
                                         />
                                         <span className="checkmark" />
                                         <span className="asistencia-texto">
                                           {jugadora.nombre}
-                                          {jugadora.dorsal ? ` #${jugadora.dorsal}` : ''}
+                                          {jugadora.dorsal
+                                            ? ` #${jugadora.dorsal}`
+                                            : ''}
                                         </span>
                                       </label>
                                     </li>
                                   ))}
-                                  {!listas.local.length && <li className="asistencia-empty">Sin jugadoras registradas</li>}
+                                  {!listas.local.length && (
+                                    <li className="asistencia-empty">
+                                      Sin jugadoras registradas
+                                    </li>
+                                  )}
                                 </ul>
                               </div>
 
                               <div className="asistencia-col">
                                 <div className="asistencia-head">
-                                  {partido.equipoVisita.nombre} ({listas.visita.filter((j) => asistenciaEditor[j.id]).length}/
-                                  {listas.visita.length})
+                                  {partido.equipoVisita.nombre} (
+                                  {
+                                    listas.visita.filter(
+                                      (j) => asistenciaEditor[j.id],
+                                    ).length
+                                  }
+                                  /{listas.visita.length})
                                 </div>
                                 <ul className="asistencia-list">
                                   {listas.visita.map((jugadora) => (
-                                    <li key={jugadora.id} className="asistencia-item">
+                                    <li
+                                      key={jugadora.id}
+                                      className="asistencia-item"
+                                    >
                                       <label>
                                         <input
                                           type="checkbox"
-                                          checked={!!asistenciaEditor[jugadora.id]}
-                                          onChange={() => toggleAsistencia(jugadora.id)}
+                                          checked={
+                                            !!asistenciaEditor[jugadora.id]
+                                          }
+                                          onChange={() =>
+                                            toggleAsistencia(jugadora.id)
+                                          }
                                         />
                                         <span className="checkmark" />
                                         <span className="asistencia-texto">
                                           {jugadora.nombre}
-                                          {jugadora.dorsal ? ` #${jugadora.dorsal}` : ''}
+                                          {jugadora.dorsal
+                                            ? ` #${jugadora.dorsal}`
+                                            : ''}
                                         </span>
                                       </label>
                                     </li>
                                   ))}
-                                  {!listas.visita.length && <li className="asistencia-empty">Sin jugadoras registradas</li>}
+                                  {!listas.visita.length && (
+                                    <li className="asistencia-empty">
+                                      Sin jugadoras registradas
+                                    </li>
+                                  )}
                                 </ul>
                               </div>
                             </>
@@ -436,11 +538,21 @@ const Partidos = () => {
                       </div>
 
                       <div className="goal-row">
-                        <select value={equipoGol} onChange={(e) => setEquipoGol(e.target.value)}>
-                          <option value="local">Gol {partido.equipoLocal.nombre}</option>
-                          <option value="visita">Gol {partido.equipoVisita.nombre}</option>
+                        <select
+                          value={equipoGol}
+                          onChange={(e) => setEquipoGol(e.target.value)}
+                        >
+                          <option value="local">
+                            Gol {partido.equipoLocal.nombre}
+                          </option>
+                          <option value="visita">
+                            Gol {partido.equipoVisita.nombre}
+                          </option>
                         </select>
-                        <select value={jugadoraGolId} onChange={(e) => setJugadoraGolId(e.target.value)}>
+                        <select
+                          value={jugadoraGolId}
+                          onChange={(e) => setJugadoraGolId(e.target.value)}
+                        >
                           <option value="">Selecciona jugadora presente</option>
                           {jugadorasParaEquipo(partido).map((jugadora) => (
                             <option key={jugadora.id} value={jugadora.id}>
@@ -449,18 +561,32 @@ const Partidos = () => {
                             </option>
                           ))}
                         </select>
-                        <button type="button" className="btn-primary" onClick={agregarGol}>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={agregarGol}
+                        >
                           + Gol
                         </button>
                       </div>
 
                       <ul className="goles-lista">
                         {golesEditor.map((g, idx) => {
-                          const player = jugadorasPorId.get(Number(g.jugadoraId));
+                          const player = jugadorasPorId.get(
+                            Number(g.jugadoraId),
+                          );
                           return (
                             <li key={`${g.jugadoraId}-${idx}`}>
-                              <span>{player?.nombre || g.nombre || `ID ${g.jugadoraId}`}</span>
-                              <button type="button" className="btn-danger btn-danger-sm" onClick={() => quitarGol(idx)}>
+                              <span>
+                                {player?.nombre ||
+                                  g.nombre ||
+                                  `ID ${g.jugadoraId}`}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn-danger btn-danger-sm"
+                                onClick={() => quitarGol(idx)}
+                              >
                                 Quitar
                               </button>
                             </li>
@@ -470,10 +596,16 @@ const Partidos = () => {
                       </ul>
 
                       <div className="editor-actions">
-                        <button className="btn-primary" onClick={() => guardarResultado(partido.id)}>
+                        <button
+                          className="btn-primary"
+                          onClick={() => guardarResultado(partido.id)}
+                        >
                           Guardar Resultado
                         </button>
-                        <button className="btn-secondary" onClick={cerrarEditor}>
+                        <button
+                          className="btn-secondary"
+                          onClick={cerrarEditor}
+                        >
                           Cancelar
                         </button>
                       </div>
@@ -485,7 +617,9 @@ const Partidos = () => {
           );
         })}
         {!loading && !!partidos.length && !partidosFiltrados.length && (
-          <div className="no-data">No hay partidos para la jornada seleccionada.</div>
+          <div className="no-data">
+            No hay partidos para la jornada seleccionada.
+          </div>
         )}
       </div>
     </div>

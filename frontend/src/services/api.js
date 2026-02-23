@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -42,7 +41,8 @@ api.interceptors.request.use((config) => {
 });
 
 export const authAPI = {
-  login: (username, password) => api.post('/auth/login', { username, password }),
+  login: (username, password) =>
+    api.post('/auth/login', { username, password }),
   me: () => api.get('/auth/me'),
   visitorToken: () => api.post('/auth/visitor-token'),
   createLeagueAdmin: (data) => api.post('/auth/league-admin', data),
@@ -86,6 +86,7 @@ export const partidosAPI = {
   create: (data) => api.post('/partidos', data),
   update: (id, data) => api.put(`/partidos/${id}`, data),
   registrarResultado: (id, data) => api.post(`/partidos/${id}/resultado`, data),
+  delete: (id) => api.delete(`/partidos/${id}`),
 };
 
 export const estadisticasAPI = {

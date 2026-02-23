@@ -44,12 +44,15 @@ const NavBar = () => {
           <NavLink to="/partidos" onClick={closeMenu}>
             Partidos
           </NavLink>
-          <NavLink to="/temporadas" onClick={closeMenu}>
-            Ligas
-          </NavLink>
+
           {isAdmin && (
             <NavLink to="/equipos" onClick={closeMenu}>
               Equipos
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink to="/temporadas" onClick={closeMenu}>
+              Temporadas
             </NavLink>
           )}
           {isAdmin && (
