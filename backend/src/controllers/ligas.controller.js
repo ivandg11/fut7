@@ -74,9 +74,28 @@ const updateLeague = async (req, res) => {
   }
 };
 
+const deleteLeague = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const league = await prisma.league.findUnique({ where: { id } });
+    if (!league) return res.status(404).json({ message: 'Liga no encontrada' });
+
+    await prisma.league.delete({ where: { id } });
+    return res.json({ message: 'Liga eliminada' });
+  } catch (error) {
+    if (error.code === 'P2003') {
+      return res.status(409).json({
+        message: 'No puedes eliminar la liga porque tiene datos relacionados',
+      });
+    }
+    return res.status(500).json({ message: 'Error al eliminar liga', error: error.message });
+  }
+};
+
 module.exports = {
   listLeagues,
   getLeagueById,
   createLeague,
   updateLeague,
+  deleteLeague,
 };

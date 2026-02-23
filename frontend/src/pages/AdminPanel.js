@@ -1,395 +1,260 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import LigaSelector from '../components/LigaSelector';
 import { useAccess } from '../contexts/AccessContext';
 import { useLiga } from '../contexts/LigaContext';
-import { equiposAPI, jugadorasAPI, partidosAPI } from '../services/api';
+import {
+  estadisticasAPI,
+  partidosAPI,
+  extractApiErrorMessage,
+} from '../services/api';
+import './AdminPanel.css';
+
+const CANCHAS_LIGUILLA = ['Cancha 1', 'Cancha 2', 'Cancha 3', 'Cancha 4'];
 
 const AdminPanel = () => {
-  const { role, isAdmin, login, error: authError, setError: setAuthError } = useAccess();
+  const {
+    role,
+    isAdmin,
+    login,
+    error: authError,
+    setError: setAuthError,
+  } = useAccess();
   const { temporadaActual } = useLiga();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [equipos, setEquipos] = useState([]);
-  const [jugadoras, setJugadoras] = useState([]);
-  const [partidos, setPartidos] = useState([]);
-  const [error, setError] = useState('');
-  const [ok, setOk] = useState('');
+  const [liguillaLoading, setLiguillaLoading] = useState(false);
+  const [liguillaMsg, setLiguillaMsg] = useState('');
+  const [liguillaErr, setLiguillaErr] = useState('');
+  const [liguillaFechaBase, setLiguillaFechaBase] = useState('');
+  const [liguillaCanchaBase, setLiguillaCanchaBase] = useState('Cancha 1');
 
-  const [nuevoEquipo, setNuevoEquipo] = useState('');
-  const [jugadoraForm, setJugadoraForm] = useState({
-    equipoId: '',
-    nombre: '',
-    dorsal: '',
-    posicion: '',
-  });
-  const [partidoForm, setPartidoForm] = useState({
-    equipoLocalId: '',
-    equipoVisitaId: '',
-    jornada: '1',
-    fecha: '',
-    cancha: '',
-  });
-  const [resultadoForm, setResultadoForm] = useState({
-    partidoId: '',
-    golesTexto: '',
-  });
-
-  const cargarData = async () => {
-    if (!temporadaActual?.id || !isAdmin) return;
-    try {
-      const [eq, ju, pa] = await Promise.all([
-        equiposAPI.getByTemporada(temporadaActual.id),
-        jugadorasAPI.getAll({ temporadaId: temporadaActual.id }),
-        partidosAPI.getByTemporada(temporadaActual.id),
-      ]);
-      setEquipos(eq.data);
-      setJugadoras(ju.data);
-      setPartidos(pa.data);
-    } catch (_error) {
-      setError('No fue posible cargar datos de administracion');
-    }
-  };
-
-  useEffect(() => {
-    cargarData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [temporadaActual?.id, isAdmin]);
-
-  const jugadorasPorEquipo = useMemo(() => {
-    const map = new Map();
-    for (const jugadora of jugadoras) {
-      if (!map.has(jugadora.equipoId)) map.set(jugadora.equipoId, []);
-      map.get(jugadora.equipoId).push(jugadora);
-    }
-    return map;
-  }, [jugadoras]);
+  const fechaSugerida = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(19, 0, 0, 0);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
-    const okLogin = await login(email, password);
+    const okLogin = await login(username, password);
     if (!okLogin) return;
-    setEmail('');
+    setUsername('');
     setPassword('');
   };
 
-  const crearEquipo = async (e) => {
-    e.preventDefault();
-    if (!temporadaActual?.id || !nuevoEquipo.trim()) return;
-    try {
-      await equiposAPI.create({
-        temporadaId: temporadaActual.id,
-        nombre: nuevoEquipo.trim(),
-      });
-      setNuevoEquipo('');
-      setOk('Equipo creado');
-      await cargarData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'No fue posible crear equipo');
+  const iniciarLiguillaTop8 = async () => {
+    if (!temporadaActual?.id) {
+      setLiguillaErr('Selecciona primero una temporada activa.');
+      return;
     }
-  };
 
-  const crearJugadora = async (e) => {
-    e.preventDefault();
-    if (!jugadoraForm.equipoId || !jugadoraForm.nombre.trim()) return;
-    try {
-      await jugadorasAPI.create({
-        equipoId: Number(jugadoraForm.equipoId),
-        nombre: jugadoraForm.nombre.trim(),
-        dorsal: jugadoraForm.dorsal ? Number(jugadoraForm.dorsal) : null,
-        posicion: jugadoraForm.posicion.trim() || null,
-      });
-      setJugadoraForm({ equipoId: '', nombre: '', dorsal: '', posicion: '' });
-      setOk('Jugadora creada');
-      await cargarData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'No fue posible crear jugadora');
-    }
-  };
+    setLiguillaLoading(true);
+    setLiguillaErr('');
+    setLiguillaMsg('');
 
-  const crearPartido = async (e) => {
-    e.preventDefault();
     try {
-      await partidosAPI.create({
-        temporadaId: temporadaActual.id,
-        equipoLocalId: Number(partidoForm.equipoLocalId),
-        equipoVisitaId: Number(partidoForm.equipoVisitaId),
-        jornada: Number(partidoForm.jornada),
-        fecha: partidoForm.fecha,
-        cancha: partidoForm.cancha || null,
-      });
-      setPartidoForm({
-        equipoLocalId: '',
-        equipoVisitaId: '',
-        jornada: '1',
-        fecha: '',
-        cancha: '',
-      });
-      setOk('Partido creado');
-      await cargarData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'No fue posible crear partido');
-    }
-  };
+      const [{ data: tabla }, { data: partidos }] = await Promise.all([
+        estadisticasAPI.tabla(temporadaActual.id),
+        partidosAPI.getByTemporada(temporadaActual.id),
+      ]);
 
-  const registrarResultado = async (e) => {
-    e.preventDefault();
-    try {
-      const goles = resultadoForm.golesTexto
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .map((item) => {
-          const [jugadoraId, minuto] = item.split(':').map((v) => v.trim());
-          return {
-            jugadoraId: Number(jugadoraId),
-            minuto: minuto ? Number(minuto) : null,
-          };
+      if (!Array.isArray(tabla) || tabla.length < 8) {
+        setLiguillaErr('Se requieren al menos 8 equipos para iniciar liguilla.');
+        return;
+      }
+
+      const top8 = tabla.slice(0, 8);
+      const cruces = [
+        [top8[0], top8[7]],
+        [top8[1], top8[6]],
+        [top8[2], top8[5]],
+        [top8[3], top8[4]],
+      ];
+
+      const maxJornada = Array.isArray(partidos)
+        ? partidos.reduce((max, p) => Math.max(max, Number(p?.jornada) || 0), 0)
+        : 0;
+      const jornadaLiguilla = maxJornada + 1;
+
+      const fechaBase = new Date(liguillaFechaBase || fechaSugerida);
+      if (Number.isNaN(fechaBase.getTime())) {
+        setLiguillaErr('Fecha de inicio no valida para liguilla.');
+        return;
+      }
+
+      const canchaIndexBase = Math.max(
+        0,
+        CANCHAS_LIGUILLA.findIndex((c) => c === liguillaCanchaBase),
+      );
+
+      for (let i = 0; i < cruces.length; i += 1) {
+        const [local, visita] = cruces[i];
+        const fechaMatch = new Date(fechaBase);
+        fechaMatch.setHours(fechaBase.getHours() + i * 2);
+
+        const cancha =
+          CANCHAS_LIGUILLA[(canchaIndexBase + i) % CANCHAS_LIGUILLA.length];
+
+        await partidosAPI.create({
+          temporadaId: temporadaActual.id,
+          equipoLocalId: Number(local.equipoId),
+          equipoVisitaId: Number(visita.equipoId),
+          jornada: jornadaLiguilla,
+          fecha: fechaMatch.toISOString(),
+          cancha,
         });
+      }
 
-      await partidosAPI.registrarResultado(Number(resultadoForm.partidoId), { goles });
-      setResultadoForm({ partidoId: '', golesTexto: '' });
-      setOk('Resultado registrado');
-      await cargarData();
+      setLiguillaMsg(
+        `Liguilla iniciada. Se crearon 4 partidos de cuartos en Jornada ${jornadaLiguilla}.`,
+      );
     } catch (err) {
-      setError(err.response?.data?.message || 'No fue posible registrar resultado');
+      setLiguillaErr(
+        `No fue posible iniciar liguilla: ${extractApiErrorMessage(err)}`,
+      );
+    } finally {
+      setLiguillaLoading(false);
     }
   };
 
   if (!isAdmin) {
     return (
-      <div className="equipos-container">
-        <h2>Panel de Administracion (JWT)</h2>
-        <p>Rol actual: {role}</p>
-        <form onSubmit={handleLogin} className="modal-content" style={{ maxWidth: 420 }}>
-          <div className="form-group">
-            <label>Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary">
-            Iniciar sesion
-          </button>
-          {authError && <p className="error-message">{authError}</p>}
-        </form>
+      <div className="admin-panel-container admin-login-wrap">
+        <div className="admin-login-card">
+          <h2>Administracion</h2>
+          <p className="admin-login-subtitle">Inicia sesion</p>
+
+          <form onSubmit={handleLogin} className="admin-login-form">
+            <div className="form-group">
+              <label>Usuario</label>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary admin-login-submit">
+              Iniciar sesion
+            </button>
+            {authError && <p className="error-message">{authError}</p>}
+          </form>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="equipos-container">
-      <h2>Panel de Administracion</h2>
-      <LigaSelector />
+    <div className="admin-panel-container">
+      <header className="admin-panel-header">
+        <h2>Panel de Administracion</h2>
+        <p>Gestion centralizada de ligas, equipos y operacion deportiva.</p>
+        {!!role && <span className="admin-role-badge">Sesion activa: {role}</span>}
+      </header>
+
+      <section className="admin-panel-toolbar">
+        <LigaSelector />
+      </section>
+
       {!temporadaActual && (
-        <div className="error-message">Selecciona o crea una temporada para administrar.</div>
-      )}
-      {error && <div className="error-message">{error}</div>}
-      {ok && (
-        <div className="success-message">
-          {ok} <button onClick={() => setOk('')}>x</button>
+        <div className="admin-warning-card">
+          Selecciona o crea una temporada para administrar modulos de operacion.
         </div>
       )}
 
-      {temporadaActual && (
-        <>
-          <div className="modal-content" style={{ marginBottom: 16 }}>
-            <h3>CRUD Equipos</h3>
-            <form onSubmit={crearEquipo} className="form-group">
-              <input
-                placeholder="Nombre del equipo"
-                value={nuevoEquipo}
-                onChange={(e) => setNuevoEquipo(e.target.value)}
-                required
-              />
-              <button type="submit" className="btn-primary">
-                Crear Equipo
-              </button>
-            </form>
-            <ul>
-              {equipos.map((equipo) => (
-                <li key={equipo.id}>{equipo.nombre}</li>
+      <section className="admin-modules-grid">
+        <article className="admin-module-card">
+          <h3>Gestion de Ligas</h3>
+          <p>
+            Crea, edita y organiza ligas junto con sus temporadas desde el modulo
+            dedicado.
+          </p>
+          <Link className="btn-primary" to="/temporadas">
+            Ir a Ligas
+          </Link>
+        </article>
+
+        <article className="admin-module-card">
+          <h3>Gestion de Equipos</h3>
+          <p>
+            Administra altas, edicion y depuracion de equipos por temporada
+            vigente.
+          </p>
+          <Link className="btn-secondary" to="/equipos">
+            Ir a Equipos
+          </Link>
+        </article>
+
+        <article className="admin-module-card">
+          <h3>Partidos y Resultados</h3>
+          <p>
+            Programa jornadas, gestiona asistencia y captura resultados oficiales.
+          </p>
+          <Link className="btn-primary" to="/partidos">
+            Ir a Partidos
+          </Link>
+        </article>
+      </section>
+
+      <section className="admin-playoff-card">
+        <h3>Iniciar Liguilla (Top 8)</h3>
+        <p>
+          Genera automaticamente cuartos de final con cruces 1vs8, 2vs7, 3vs6 y
+          4vs5 usando la tabla actual.
+        </p>
+
+        <div className="admin-playoff-form">
+          <div className="form-group">
+            <label>Inicio de partidos</label>
+            <input
+              type="datetime-local"
+              value={liguillaFechaBase}
+              onChange={(e) => setLiguillaFechaBase(e.target.value)}
+              placeholder={fechaSugerida}
+            />
+          </div>
+          <div className="form-group">
+            <label>Cancha inicial</label>
+            <select
+              value={liguillaCanchaBase}
+              onChange={(e) => setLiguillaCanchaBase(e.target.value)}
+            >
+              {CANCHAS_LIGUILLA.map((cancha) => (
+                <option key={cancha} value={cancha}>
+                  {cancha}
+                </option>
               ))}
-            </ul>
+            </select>
           </div>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={iniciarLiguillaTop8}
+            disabled={!temporadaActual || liguillaLoading}
+          >
+            {liguillaLoading ? 'Creando cruces...' : 'Comenzar liguilla'}
+          </button>
+        </div>
 
-          <div className="modal-content" style={{ marginBottom: 16 }}>
-            <h3>CRUD Jugadoras</h3>
-            <form onSubmit={crearJugadora}>
-              <div className="form-group">
-                <label>Equipo</label>
-                <select
-                  value={jugadoraForm.equipoId}
-                  onChange={(e) =>
-                    setJugadoraForm({ ...jugadoraForm, equipoId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Selecciona equipo</option>
-                  {equipos.map((equipo) => (
-                    <option value={equipo.id} key={equipo.id}>
-                      {equipo.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Nombre</label>
-                <input
-                  value={jugadoraForm.nombre}
-                  onChange={(e) =>
-                    setJugadoraForm({ ...jugadoraForm, nombre: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Dorsal</label>
-                <input
-                  value={jugadoraForm.dorsal}
-                  onChange={(e) =>
-                    setJugadoraForm({ ...jugadoraForm, dorsal: e.target.value })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label>Posicion</label>
-                <input
-                  value={jugadoraForm.posicion}
-                  onChange={(e) =>
-                    setJugadoraForm({ ...jugadoraForm, posicion: e.target.value })
-                  }
-                />
-              </div>
-              <button type="submit" className="btn-primary">
-                Crear Jugadora
-              </button>
-            </form>
-            <ul>
-              {equipos.map((equipo) => (
-                <li key={equipo.id}>
-                  <strong>{equipo.nombre}:</strong>{' '}
-                  {(jugadorasPorEquipo.get(equipo.id) || [])
-                    .map((jugadora) => `${jugadora.nombre}${jugadora.dorsal ? ` #${jugadora.dorsal}` : ''}`)
-                    .join(', ') || 'Sin jugadoras'}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="modal-content" style={{ marginBottom: 16 }}>
-            <h3>Registro de Partidos</h3>
-            <form onSubmit={crearPartido}>
-              <div className="form-group">
-                <label>Jornada</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={partidoForm.jornada}
-                  onChange={(e) => setPartidoForm({ ...partidoForm, jornada: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Fecha y hora</label>
-                <input
-                  type="datetime-local"
-                  value={partidoForm.fecha}
-                  onChange={(e) => setPartidoForm({ ...partidoForm, fecha: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Cancha</label>
-                <input
-                  value={partidoForm.cancha}
-                  onChange={(e) => setPartidoForm({ ...partidoForm, cancha: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Equipo Local</label>
-                <select
-                  value={partidoForm.equipoLocalId}
-                  onChange={(e) =>
-                    setPartidoForm({ ...partidoForm, equipoLocalId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Selecciona equipo</option>
-                  {equipos.map((equipo) => (
-                    <option key={equipo.id} value={equipo.id}>
-                      {equipo.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Equipo Visita</label>
-                <select
-                  value={partidoForm.equipoVisitaId}
-                  onChange={(e) =>
-                    setPartidoForm({ ...partidoForm, equipoVisitaId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Selecciona equipo</option>
-                  {equipos.map((equipo) => (
-                    <option key={equipo.id} value={equipo.id}>
-                      {equipo.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button type="submit" className="btn-primary">
-                Crear Partido
-              </button>
-            </form>
-          </div>
-
-          <div className="modal-content">
-            <h3>Registrar Resultado y Goles por Jugadora</h3>
-            <form onSubmit={registrarResultado}>
-              <div className="form-group">
-                <label>Partido</label>
-                <select
-                  value={resultadoForm.partidoId}
-                  onChange={(e) =>
-                    setResultadoForm({ ...resultadoForm, partidoId: e.target.value })
-                  }
-                  required
-                >
-                  <option value="">Selecciona partido</option>
-                  {partidos.map((partido) => (
-                    <option key={partido.id} value={partido.id}>
-                      J{partido.jornada}: {partido.equipoLocal.nombre} vs {partido.equipoVisita.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Goles (formato: jugadoraId:minuto, jugadoraId:minuto)</label>
-                <input
-                  value={resultadoForm.golesTexto}
-                  onChange={(e) =>
-                    setResultadoForm({ ...resultadoForm, golesTexto: e.target.value })
-                  }
-                  placeholder="12:10, 12:40, 19:55"
-                />
-              </div>
-              <button type="submit" className="btn-primary">
-                Guardar Resultado
-              </button>
-            </form>
-          </div>
-        </>
-      )}
+        {liguillaErr && <div className="error-message">{liguillaErr}</div>}
+        {liguillaMsg && <div className="success-message">{liguillaMsg}</div>}
+      </section>
     </div>
   );
 };

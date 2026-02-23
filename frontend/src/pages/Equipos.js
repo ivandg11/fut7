@@ -1,55 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAccess } from '../contexts/AccessContext';
 import { useLiga } from '../contexts/LigaContext';
-import { equiposAPI } from '../services/api';
+import { equiposAPI, jugadorasAPI, extractApiErrorMessage } from '../services/api';
 import LigaSelector from '../components/LigaSelector';
 import './Equipos.css';
 
+const DEFAULT_FILAS_JUGADORAS = 10;
+const createJugadoraRow = (overrides = {}) => ({
+  id: null,
+  nombre: '',
+  dorsal: '',
+  originalNombre: '',
+  originalDorsal: '',
+  ...overrides,
+});
+const buildRowsWithMinimum = (rows, min = DEFAULT_FILAS_JUGADORAS) => {
+  const normalized = rows.map((row) => createJugadoraRow(row));
+  while (normalized.length < min) normalized.push(createJugadoraRow());
+  return normalized;
+};
+
 const Equipos = () => {
-  const { rol } = useAccess();
-  const { ligaActual, loading: ligaLoading } = useLiga();
+  const { role } = useAccess();
+  const { temporadaActual, loading: ligaLoading } = useLiga();
   const [equipos, setEquipos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [equipoToDelete, setEquipoToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({
-    nombre: '',
-  });
+  const [formData, setFormData] = useState({ nombre: '' });
   const [editingId, setEditingId] = useState(null);
+  const [jugadorasDraft, setJugadorasDraft] = useState(
+    buildRowsWithMinimum([], DEFAULT_FILAS_JUGADORAS),
+  );
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Efecto para cargar equipos cuando cambia la liga actual
   useEffect(() => {
-    if (ligaActual) {
-      console.log('Liga actual cambiada a:', ligaActual);
+    if (temporadaActual?.id) {
       cargarEquipos();
     }
-  }, [ligaActual]);
+  }, [temporadaActual?.id]);
 
   const cargarEquipos = async () => {
-    if (!ligaActual) {
-      console.log('No hay liga seleccionada');
-      return;
-    }
+    if (!temporadaActual?.id) return;
 
     setLoading(true);
     setError('');
     try {
-      console.log(
-        `Cargando equipos para liga: ${ligaActual.dia} (ID: ${ligaActual.id})`,
-      );
-      const response = await equiposAPI.getByLiga(ligaActual.dia);
-      console.log('Equipos recibidos:', response.data);
+      const response = await equiposAPI.getByTemporada(temporadaActual.id);
       setEquipos(response.data);
-    } catch (error) {
-      console.error('Error al cargar equipos:', error);
-      setError(
-        'Error al cargar los equipos: ' +
-          (error.response?.data?.message || error.message),
-      );
+    } catch (err) {
+      setError(`Error al cargar los equipos: ${extractApiErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -65,34 +69,98 @@ const Equipos = () => {
       return;
     }
 
-    if (!ligaActual) {
-      setError('No hay una liga seleccionada');
+    if (!temporadaActual?.id) {
+      setError('No hay una temporada seleccionada');
       return;
     }
 
-    try {
-      const equipoData = {
-        nombre: formData.nombre.trim(),
-        ligaId: ligaActual.id,
-      };
-
-      console.log('Enviando datos:', equipoData);
-
-      if (editingId) {
-        await equiposAPI.update(editingId, {
-          nombre: equipoData.nombre,
-        });
-        setSuccessMessage('Equipo actualizado exitosamente');
-      } else {
-        await equiposAPI.create(equipoData);
-        setSuccessMessage('Equipo creado exitosamente');
+    const jugadorasLimpias = [];
+    for (const jugadora of jugadorasDraft) {
+      const nombre = jugadora.nombre.trim();
+      const dorsalRaw = String(jugadora.dorsal || '').trim();
+      if (!nombre && !dorsalRaw) continue;
+      if (!nombre) {
+        setError('Cada fila con dorsal debe tener nombre de jugadora');
+        return;
       }
+      if (dorsalRaw && !/^\d+$/.test(dorsalRaw)) {
+        setError(`Dorsal invalido para ${nombre}. Usa solo numeros.`);
+        return;
+      }
+      jugadorasLimpias.push({
+        id: jugadora.id,
+        nombre,
+        dorsal: dorsalRaw ? Number(dorsalRaw) : null,
+        originalNombre: jugadora.originalNombre,
+        originalDorsal: jugadora.originalDorsal,
+      });
+    }
 
-      cargarEquipos();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error al guardar equipo:', error);
-      setError(error.response?.data?.message || 'Error al guardar el equipo');
+    try {
+      if (editingId) {
+        await equiposAPI.update(editingId, { nombre: formData.nombre.trim() });
+        const jugadorasNuevas = jugadorasLimpias.filter((jugadora) => !jugadora.id);
+        const jugadorasEditadas = jugadorasLimpias.filter((jugadora) => {
+          if (!jugadora.id) return false;
+          return (
+            jugadora.nombre !== jugadora.originalNombre ||
+            String(jugadora.dorsal ?? '') !== String(jugadora.originalDorsal ?? '')
+          );
+        });
+
+        if (jugadorasEditadas.length) {
+          await Promise.all(
+            jugadorasEditadas.map((jugadora) =>
+              jugadorasAPI.update(jugadora.id, {
+                nombre: jugadora.nombre,
+                dorsal: jugadora.dorsal,
+              }),
+            ),
+          );
+        }
+
+        if (jugadorasNuevas.length) {
+          await Promise.all(
+            jugadorasNuevas.map((jugadora) =>
+              jugadorasAPI.create({
+                equipoId: editingId,
+                nombre: jugadora.nombre,
+                dorsal: jugadora.dorsal,
+              }),
+            ),
+          );
+        }
+        await Promise.all([cargarEquipos(), cargarJugadorasEquipo(editingId)]);
+        setSuccessMessage('Equipo actualizado exitosamente');
+        handleCloseModal();
+      } else {
+        const response = await equiposAPI.create({
+          nombre: formData.nombre.trim(),
+          temporadaId: temporadaActual.id,
+        });
+        const equipoIdCreado = response.data?.id;
+        const jugadorasNuevas = jugadorasLimpias.filter((jugadora) => !jugadora.id);
+        if (equipoIdCreado && jugadorasNuevas.length) {
+          await Promise.all(
+            jugadorasNuevas.map((jugadora) =>
+              jugadorasAPI.create({
+                equipoId: equipoIdCreado,
+                nombre: jugadora.nombre,
+                dorsal: jugadora.dorsal,
+              }),
+            ),
+          );
+        }
+        setSuccessMessage(
+          jugadorasNuevas.length
+            ? `Equipo creado y ${jugadorasNuevas.length} jugadora(s) agregada(s).`
+            : 'Equipo creado exitosamente',
+        );
+        await cargarEquipos();
+        handleCloseModal();
+      }
+    } catch (err) {
+      setError(`Error al guardar el equipo: ${extractApiErrorMessage(err)}`);
     }
   };
 
@@ -100,17 +168,13 @@ const Equipos = () => {
     if (!equipoToDelete) return;
 
     try {
-      await equiposAPI.delete(equipoToDelete.id);
+      await equiposAPI.remove(equipoToDelete.id);
       setSuccessMessage('Equipo eliminado exitosamente');
-      cargarEquipos();
+      await cargarEquipos();
       setShowDeleteModal(false);
       setEquipoToDelete(null);
-    } catch (error) {
-      console.error('Error al eliminar equipo:', error);
-      alert(
-        'Error al eliminar el equipo: ' +
-          (error.response?.data?.message || error.message),
-      );
+    } catch (err) {
+      alert(`Error al eliminar el equipo: ${extractApiErrorMessage(err)}`);
     }
   };
 
@@ -120,10 +184,18 @@ const Equipos = () => {
   };
 
   const handleEdit = (equipo) => {
-    setFormData({
-      nombre: equipo.nombre,
-    });
+    setFormData({ nombre: equipo.nombre });
     setEditingId(equipo.id);
+    setJugadorasDraft(buildRowsWithMinimum([], DEFAULT_FILAS_JUGADORAS));
+    cargarJugadorasEquipo(equipo.id);
+    setShowModal(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    setFormData({ nombre: '' });
+    setEditingId(null);
+    setJugadorasDraft(buildRowsWithMinimum([], DEFAULT_FILAS_JUGADORAS));
+    setError('');
     setShowModal(true);
   };
 
@@ -131,26 +203,105 @@ const Equipos = () => {
     setShowModal(false);
     setFormData({ nombre: '' });
     setEditingId(null);
+    setJugadorasDraft(buildRowsWithMinimum([], DEFAULT_FILAS_JUGADORAS));
     setError('');
+  };
+
+  const cargarJugadorasEquipo = async (equipoId) => {
+    if (!equipoId) return;
+    try {
+      const response = await jugadorasAPI.getAll({ equipoId });
+      const rows = (response.data || []).map((jugadora) =>
+        createJugadoraRow({
+          id: jugadora.id,
+          nombre: jugadora.nombre || '',
+          dorsal:
+            jugadora.dorsal === null || jugadora.dorsal === undefined
+              ? ''
+              : String(jugadora.dorsal),
+          originalNombre: jugadora.nombre || '',
+          originalDorsal:
+            jugadora.dorsal === null || jugadora.dorsal === undefined
+              ? ''
+              : String(jugadora.dorsal),
+        }),
+      );
+      setJugadorasDraft(buildRowsWithMinimum(rows, DEFAULT_FILAS_JUGADORAS));
+    } catch (err) {
+      setError(`Error al cargar jugadoras: ${extractApiErrorMessage(err)}`);
+      setJugadorasDraft(buildRowsWithMinimum([], DEFAULT_FILAS_JUGADORAS));
+    }
+  };
+
+  const actualizarJugadoraDraft = (index, field, value) => {
+    setJugadorasDraft((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+  };
+
+  const agregarFilaJugadoraDraft = () => {
+    setJugadorasDraft((prev) => [...prev, createJugadoraRow()]);
+  };
+
+  const quitarFilaJugadoraDraft = (index) => {
+    const fila = jugadorasDraft[index];
+    if (!fila) return;
+
+    const removeLocalRow = () => {
+      setJugadorasDraft((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        return buildRowsWithMinimum(next, DEFAULT_FILAS_JUGADORAS);
+      });
+    };
+
+    if (!fila.id) {
+      removeLocalRow();
+      return;
+    }
+
+    const eliminar = async () => {
+      try {
+        await jugadorasAPI.remove(fila.id);
+        setSuccessMessage(`Jugadora ${fila.nombre} eliminada.`);
+        removeLocalRow();
+        await cargarEquipos();
+      } catch (err) {
+        setError(`Error al eliminar jugadora: ${extractApiErrorMessage(err)}`);
+      }
+    };
+    eliminar();
   };
 
   const equiposFiltrados = equipos.filter((equipo) =>
     equipo.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const puedeCrear = () => rol === 'admin';
-  const puedeEditar = () => rol === 'admin';
-  const puedeEliminar = () => rol === 'admin';
+  const canManage = role === 'SUPER_ADMIN' || role === 'LEAGUE_ADMIN';
 
   if (ligaLoading) {
     return <div className="loading-spinner">Cargando ligas...</div>;
   }
 
-  if (!ligaActual) {
+  if (!canManage) {
+    return (
+      <div className="equipos-container">
+        <div className="error-message">Solo administradores pueden ver esta seccion.</div>
+      </div>
+    );
+  }
+
+  if (!temporadaActual) {
     return (
       <div className="equipos-container">
         <LigaSelector />
-        <div className="no-data">Selecciona una liga para ver sus equipos</div>
+        <div className="no-data">
+          Selecciona o crea una temporada para poder dar de alta equipos.
+          <div style={{ marginTop: 12 }}>
+            <Link to="/temporadas" className="btn-primary">
+              Ir a Temporadas
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -161,11 +312,11 @@ const Equipos = () => {
 
       <div className="header">
         <div className="header-title">
-          <h2>⚽ {ligaActual.nombre}</h2>
+          <h2>Equipos</h2>
           <p className="total-equipos">{equipos.length} equipos registrados</p>
         </div>
-        {puedeCrear() && (
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
+        {canManage && (
+          <button className="btn-primary" onClick={handleOpenCreateModal}>
             + Nuevo Equipo
           </button>
         )}
@@ -174,21 +325,21 @@ const Equipos = () => {
       {successMessage && (
         <div className="success-message">
           {successMessage}
-          <button onClick={() => setSuccessMessage('')}>×</button>
+          <button onClick={() => setSuccessMessage('')}>x</button>
         </div>
       )}
 
       {error && (
         <div className="error-message">
           {error}
-          <button onClick={() => setError('')}>×</button>
+          <button onClick={() => setError('')}>x</button>
         </div>
       )}
 
       <div className="search-bar">
         <input
           type="text"
-          placeholder="🔍 Buscar equipo por nombre..."
+          placeholder="Buscar equipo por nombre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -202,10 +353,7 @@ const Equipos = () => {
           {searchTerm ? (
             <p>No se encontraron equipos con "{searchTerm}"</p>
           ) : (
-            <p>
-              No hay equipos registrados en esta liga.{' '}
-              {puedeCrear() && '¡Crea el primer equipo!'}
-            </p>
+            <p>No hay equipos registrados en esta temporada.</p>
           )}
         </div>
       ) : (
@@ -218,42 +366,18 @@ const Equipos = () => {
 
               <div className="equipo-stats">
                 <div className="stat-item">
-                  <span className="stat-label">PJ</span>
-                  <span className="stat-value">{equipo.partidosJugados}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">GF</span>
-                  <span className="stat-value">{equipo.golesFavor}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">GC</span>
-                  <span className="stat-value">{equipo.golesContra}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">DG</span>
-                  <span className="stat-value">
-                    {equipo.golesFavor - equipo.golesContra}
-                  </span>
-                </div>
-                <div className="stat-item puntos">
-                  <span className="stat-label">PTS</span>
-                  <span className="stat-value">{equipo.puntos}</span>
+                  <span className="stat-label">Plantel</span>
+                  <span className="stat-value">{equipo._count?.jugadoras || 0}</span>
                 </div>
               </div>
 
-              {puedeEditar() && (
+              {canManage && (
                 <div className="equipo-acciones">
-                  <button
-                    className="btn-edit"
-                    onClick={() => handleEdit(equipo)}
-                  >
+                  <button className="btn-edit" onClick={() => handleEdit(equipo)}>
                     Editar
                   </button>
-                  <button
-                    className="btn-delete"
-                    onClick={() => confirmDelete(equipo)}
-                  >
-                     Eliminar
+                  <button className="btn-delete" onClick={() => confirmDelete(equipo)}>
+                    Eliminar
                   </button>
                 </div>
               )}
@@ -262,14 +386,10 @@ const Equipos = () => {
         </div>
       )}
 
-      {/* Modal para crear/editar equipo */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>
-              {editingId ? ' Editar Equipo' : ' Nuevo Equipo'} -{' '}
-              {ligaActual.nombre}
-            </h3>
+            <h3>{editingId ? 'Editar Equipo' : 'Nuevo Equipo'}</h3>
 
             {error && <div className="error-message">{error}</div>}
 
@@ -281,24 +401,56 @@ const Equipos = () => {
                   id="nombre"
                   name="nombre"
                   value={formData.nombre}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nombre: e.target.value })
-                  }
-                  placeholder="Ej: Real Madrid, Barcelona FC, etc."
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  placeholder="Ej: Real Madrid, Barcelona FC"
                   required
                   autoFocus
                 />
               </div>
 
+              <div className="plantel-form-section">
+                <div className="plantel-form-header">
+                  <h4>Plantel (opcional)</h4>
+                  <button type="button" className="btn-secondary" onClick={agregarFilaJugadoraDraft}>
+                    + Fila Jugadora
+                  </button>
+                </div>
+                <p className="plantel-help">Agrega nombre y numero. Si lo dejas vacio, se guarda solo el equipo.</p>
+
+                <div className="jugadoras-draft-grid">
+                  {jugadorasDraft.map((jugadora, idx) => (
+                    <div key={`draft-${idx}`} className="jugadora-draft-row">
+                      <input
+                        type="text"
+                        value={jugadora.nombre}
+                        onChange={(e) => actualizarJugadoraDraft(idx, 'nombre', e.target.value)}
+                        placeholder="Nombre jugadora"
+                      />
+                      <input
+                        type="text"
+                        value={jugadora.dorsal}
+                        onChange={(e) => actualizarJugadoraDraft(idx, 'dorsal', e.target.value)}
+                        placeholder="Numero"
+                        inputMode="numeric"
+                      />
+                      <button
+                        type="button"
+                        className="btn-delete-inline"
+                        onClick={() => quitarFilaJugadoraDraft(idx)}
+                        aria-label={`Quitar fila ${idx + 1}`}
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="modal-actions">
                 <button type="submit" className="btn-primary">
-                  {editingId ? 'Actualizar Equipo' : 'Guardar Equipo'}
+                  {editingId ? 'Guardar cambios' : 'Guardar equipo'}
                 </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleCloseModal}
-                >
+                <button type="button" className="btn-secondary" onClick={handleCloseModal}>
                   Cancelar
                 </button>
               </div>
@@ -307,36 +459,22 @@ const Equipos = () => {
         </div>
       )}
 
-      {/* Modal de confirmación para eliminar */}
       {showDeleteModal && equipoToDelete && (
         <div className="modal-overlay">
           <div className="modal-content modal-delete">
-            <h3>⚠️ Eliminar Equipo</h3>
+            <h3>Eliminar Equipo</h3>
             <p className="delete-warning">
-              ¿Estás seguro que deseas eliminar a{' '}
-              <strong>"{equipoToDelete.nombre}"</strong> de la{' '}
-              {ligaActual.nombre}?
+              Estas seguro que deseas eliminar a <strong>"{equipoToDelete.nombre}"</strong>?
             </p>
             <p className="delete-consequences">
-              Esta acción eliminará permanentemente el equipo y no se puede
-              deshacer.
-              {equipoToDelete.partidosJugados > 0 && (
-                <span className="warning-text">
-                  <br />
-                  ⚠️ Este equipo tiene {equipoToDelete.partidosJugados} partidos
-                  jugados. Se eliminarán también todos sus partidos.
-                </span>
-              )}
+              Esta accion eliminara permanentemente el equipo y no se puede deshacer.
             </p>
 
             <div className="modal-actions">
               <button className="btn-delete-confirm" onClick={handleDelete}>
-                Sí, eliminar equipo
+                Si, eliminar equipo
               </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowDeleteModal(false)}
-              >
+              <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>
                 Cancelar
               </button>
             </div>

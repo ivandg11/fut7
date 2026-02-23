@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import LigaSelector from '../components/LigaSelector';
 import { useLiga } from '../contexts/LigaContext';
-import { estadisticasAPI } from '../services/api';
+import { estadisticasAPI, extractApiErrorMessage } from '../services/api';
 
 const Goleo = () => {
   const { ligaActual, temporadaActual } = useLiga();
@@ -20,8 +20,8 @@ const Goleo = () => {
       try {
         const response = await estadisticasAPI.goleo(temporadaActual.id);
         setGoleo(response.data);
-      } catch (_error) {
-        setError('No fue posible cargar la tabla de goleo');
+      } catch (err) {
+        setError(`No fue posible cargar la tabla de goleo: ${extractApiErrorMessage(err)}`);
       } finally {
         setLoading(false);
       }
@@ -32,9 +32,12 @@ const Goleo = () => {
   return (
     <div className="tabla-container">
       <LigaSelector />
-      <h2>
-        Tabla de Goleo: {ligaActual?.nombre} {temporadaActual ? `- ${temporadaActual.nombre}` : ''}
-      </h2>
+      <header className="tabla-page-header">
+        <h2>
+          Tabla de Goleo: {ligaActual?.nombre} {temporadaActual ? `- ${temporadaActual.nombre}` : ''}
+        </h2>
+        <p>Ranking de jugadoras con impacto ofensivo y productividad por temporada.</p>
+      </header>
 
       {loading && <div className="loading-spinner">Cargando goleo...</div>}
       {error && <div className="error-message">{error}</div>}
@@ -55,12 +58,16 @@ const Goleo = () => {
               </tr>
             </thead>
             <tbody>
-              {goleo.map((item) => (
-                <tr key={item.jugadoraId}>
-                  <td>{item.posicion}</td>
-                  <td>{item.jugadora}</td>
+              {goleo.map((item, index) => (
+                <tr key={item.jugadoraId} className={`${index < 3 ? 'top-4' : ''} ${index === 0 ? 'is-first' : ''}`}>
+                  <td className="posicion">
+                    <span className="rank-pill">{item.posicion}</span>
+                  </td>
+                  <td className="equipo-nombre">{item.jugadora}</td>
                   <td>{item.equipo}</td>
-                  <td>{item.goles}</td>
+                  <td className="puntos">
+                    <span className="points-pill">{item.goles}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

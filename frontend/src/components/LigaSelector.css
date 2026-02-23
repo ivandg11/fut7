@@ -8,18 +8,32 @@
   gap: 12px;
 }
 
+.liga-selector-group {
+  display: grid;
+  gap: 6px;
+}
+
+.liga-selector-label {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .liga-native-select {
   width: 100%;
-  padding: 10px;
+  padding: 10px 34px 10px 10px;
   border-radius: 8px;
-  border: 1px solid #cfd3d8;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text);
   font-size: 14px;
 }
 
 .liga-selector-loading,
 .liga-selector-error {
   padding: 12px;
-  background: #f4f6f8;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 

@@ -41,15 +41,21 @@ const ensureSuperAdmin = async () => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email y password son requeridos' });
+    const { username, email, password } = req.body;
+    const userIdentifier = (username || email || '').trim();
+    if (!userIdentifier || !password) {
+      return res.status(400).json({ message: 'Usuario y password son requeridos' });
     }
 
     await ensureSuperAdmin();
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { nombre: userIdentifier },
+          { email: userIdentifier.toLowerCase() },
+        ],
+      },
     });
 
     if (!user || !user.activo) {

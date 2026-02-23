@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { ligasAPI, temporadasAPI } from '../services/api';
+import { extractApiErrorMessage, ligasAPI, temporadasAPI } from '../services/api';
 
 const LigaContext = createContext(null);
 
@@ -41,8 +41,8 @@ export const LigaProvider = ({ children }) => {
         leagues.some((l) => l.id === ligaActualId) ? ligaActualId : leagues[0].id;
       setLigaActualId(selectedLigaId);
       await cargarTemporadas(selectedLigaId);
-    } catch (_error) {
-      setError('No fue posible cargar ligas');
+    } catch (err) {
+      setError(`No fue posible cargar ligas: ${extractApiErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -67,10 +67,10 @@ export const LigaProvider = ({ children }) => {
           : (activa?.id || seasons[0].id);
 
       setTemporadaActualId(nextTemporadaId);
-    } catch (_error) {
+    } catch (err) {
       setTemporadas([]);
       setTemporadaActualId(null);
-      setError('No fue posible cargar temporadas');
+      setError(`No fue posible cargar temporadas: ${extractApiErrorMessage(err)}`);
     }
   };
 
@@ -81,7 +81,6 @@ export const LigaProvider = ({ children }) => {
 
   useEffect(() => {
     cargarLigas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = useMemo(

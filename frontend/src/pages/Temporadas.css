@@ -1,0 +1,144 @@
+.temporadas-container {
+  max-width: 1240px;
+  margin: 1.4rem auto 0;
+  padding: 0 1rem 1rem;
+}
+
+.temporadas-container h2 {
+  margin: 0 0 1rem;
+  font-family: 'Sora', sans-serif;
+}
+
+.temporadas-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.temporadas-panel h3 {
+  margin: 0 0 0.8rem;
+  font-family: 'Sora', sans-serif;
+}
+
+.ligas-lista,
+.temporadas-lista {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.liga-card,
+.temporada-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 0.8rem;
+}
+
+.liga-card h4,
+.temporada-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.liga-card p,
+.temporada-card p {
+  margin: 0.22rem 0 0;
+  color: var(--text-muted);
+}
+
+.liga-card.seleccionada,
+.temporada-card.seleccionada {
+  outline: 2px solid rgba(34, 197, 94, 0.35);
+}
+
+.liga-actions,
+.temporada-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.liga-temporadas-expand {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.liga-temporadas-expand h4 {
+  margin: 0;
+}
+
+.estado {
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.26rem 0.6rem;
+}
+
+.estado.activa {
+  color: #c7f9d8;
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.estado.inactiva {
+  color: #f7d7ad;
+  background: rgba(185, 125, 34, 0.2);
+}
+
+.btn-delete-temporada {
+  border: 0;
+  border-radius: 10px;
+  padding: 0.58rem 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  background: #facc15;
+}
+
+.btn-delete-temporada:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.temporada-form-wrap {
+  margin-top: 0.75rem;
+}
+
+.temporada-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.temporada-form .form-group {
+  margin: 0;
+}
+
+.temporada-form .form-group label {
+  display: block;
+  margin-bottom: 0.32rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.temporada-form .form-group input,
+.temporada-form .form-group select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.72rem 0.78rem;
+  font-size: 0.94rem;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+@media (max-width: 980px) {
+  .temporadas-container {
+    padding: 0 0.78rem 0.9rem;
+  }
+}

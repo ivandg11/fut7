@@ -8,6 +8,8 @@ import TablaPosiciones from './pages/TablaPosiciones';
 import Goleo from './pages/Goleo';
 import Partidos from './pages/Partidos';
 import AdminPanel from './pages/AdminPanel';
+import Equipos from './pages/Equipos';
+import Temporadas from './pages/Temporadas';
 import './App.css';
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
                 <Route path="/tabla" element={<TablaPosiciones />} />
                 <Route path="/goleo" element={<Goleo />} />
                 <Route path="/partidos" element={<Partidos />} />
+                <Route path="/temporadas" element={<Temporadas />} />
+                <Route path="/equipos" element={<Equipos />} />
                 <Route path="/admin" element={<AdminPanel />} />
               </Routes>
             </main>

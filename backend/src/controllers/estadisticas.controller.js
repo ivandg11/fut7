@@ -82,38 +82,41 @@ const getScorers = async (req, res) => {
     const goals = await prisma.matchGoal.groupBy({
       by: ['jugadoraId'],
       where: {
+        jugadora: {
+          activa: true,
+        },
         partido: {
           temporadaId,
           status: 'JUGADO',
         },
       },
-      _count: { _all: true },
-      orderBy: { _count: { _all: 'desc' } },
+      _count: { jugadoraId: true },
+      orderBy: { _count: { jugadoraId: 'desc' } },
     });
 
     const playerIds = goals.map((goal) => goal.jugadoraId);
     const players = playerIds.length
       ? await prisma.player.findMany({
-          where: { id: { in: playerIds } },
+          where: { id: { in: playerIds }, activa: true },
           include: { equipo: true },
         })
       : [];
 
     const playersMap = new Map(players.map((player) => [player.id, player]));
     const scorers = goals
-      .map((goal, idx) => {
+      .map((goal) => {
         const player = playersMap.get(goal.jugadoraId);
         if (!player) return null;
         return {
-          posicion: idx + 1,
           jugadoraId: player.id,
           jugadora: player.nombre,
           equipoId: player.equipo.id,
           equipo: player.equipo.nombre,
-          goles: goal._count._all,
+          goles: goal._count.jugadoraId,
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((item, index) => ({ ...item, posicion: index + 1 }));
 
     return res.json(scorers);
   } catch (error) {

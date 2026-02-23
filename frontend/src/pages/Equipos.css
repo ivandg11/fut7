@@ -39,12 +39,12 @@
 }
 
 .search-input:focus {
-  outline: 2px solid #127412;
-  border-color: #000000;
+  outline: 2px solid rgba(34, 197, 94, 0.3);
+  border-color: #22c55e;
 }
 
 .no-equipos {
-  border: 1px dashed #c6d8ea;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
   border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--text-muted);
@@ -68,7 +68,7 @@
 
 .equipo-header {
   padding: 1rem;
-  border-bottom: 1px solid #e7edf5;
+  border-bottom: 1px solid var(--border);
   text-align: center;
 }
 
@@ -105,7 +105,7 @@
 }
 
 .equipos-container .stat-item.puntos .stat-value {
-  color: var(--success);
+  color: #22c55e;
 }
 
 .equipo-acciones {
@@ -122,19 +122,19 @@
   padding: 0.58rem 0.8rem;
   font-size: 0.86rem;
   font-weight: 700;
-  color: #fff;
+  color: #0f172a;
   cursor: pointer;
 }
 
 .btn-edit {
   flex: 1;
-  background: linear-gradient(120deg, #bf7e1d 0%, #d99835 100%);
+  background: #facc15;
 }
 
 .btn-delete,
 .btn-delete-confirm {
   flex: 1;
-  background: linear-gradient(120deg, #bc3d52 0%, #d35367 100%);
+  background: #facc15;
 }
 
 .modal-delete {
@@ -152,7 +152,7 @@
 }
 
 .warning-text {
-  color: #98253a;
+  color: #22c55e;
   font-weight: 700;
 }
 
@@ -170,7 +170,7 @@
 .equipos-container .form-group label {
   display: block;
   margin-bottom: 0.35rem;
-  color: #127412;
+  color: var(--text-muted);
   font-weight: 700;
   font-size: 0.9rem;
 }
@@ -184,8 +184,66 @@
 }
 
 .equipos-container .form-group input:focus {
-  outline: 2px solid #beddf7;
-  border-color: #abd4f7;
+  outline: 2px solid rgba(34, 197, 94, 0.3);
+  border-color: #22c55e;
+}
+
+.plantel-form-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 0.7rem;
+  margin-bottom: 0.85rem;
+}
+
+.plantel-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plantel-form-header h4 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.97rem;
+}
+
+.plantel-help {
+  margin: 0.4rem 0 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.jugadoras-draft-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.jugadora-draft-row {
+  display: grid;
+  grid-template-columns: 1fr 130px auto;
+  gap: 0.45rem;
+}
+
+.jugadora-draft-row input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.62rem 0.7rem;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.btn-delete-inline {
+  border: 0;
+  border-radius: 9px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  background: #facc15;
 }
 
 @media (max-width: 840px) {
@@ -202,6 +260,15 @@
 
   .equipos-grid {
     grid-template-columns: 1fr;
+  }
+
+  .jugadora-draft-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plantel-form-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .modal-actions {

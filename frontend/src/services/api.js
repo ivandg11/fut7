@@ -12,6 +12,27 @@ const api = axios.create({
   timeout: 15000,
 });
 
+const extractApiErrorMessage = (error) => {
+  const status = error?.response?.status;
+  const backendMessage = error?.response?.data?.message;
+  const backendError = error?.response?.data?.error;
+
+  if (backendMessage || backendError) {
+    const detail = [backendMessage, backendError].filter(Boolean).join(' - ');
+    return status ? `HTTP ${status}: ${detail}` : detail;
+  }
+
+  if (error?.code === 'ECONNABORTED') {
+    return 'Tiempo de espera agotado al conectar con el backend';
+  }
+
+  if (error?.message === 'Network Error') {
+    return `No se pudo conectar al backend en ${API_URL}`;
+  }
+
+  return error?.message || 'Error desconocido';
+};
+
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem('authToken');
   if (token) {
@@ -21,7 +42,7 @@ api.interceptors.request.use((config) => {
 });
 
 export const authAPI = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
+  login: (username, password) => api.post('/auth/login', { username, password }),
   me: () => api.get('/auth/me'),
   visitorToken: () => api.post('/auth/visitor-token'),
   createLeagueAdmin: (data) => api.post('/auth/league-admin', data),
@@ -32,6 +53,7 @@ export const ligasAPI = {
   getById: (id) => api.get(`/ligas/${id}`),
   create: (data) => api.post('/ligas', data),
   update: (id, data) => api.put(`/ligas/${id}`, data),
+  remove: (id) => api.delete(`/ligas/${id}`),
 };
 
 export const temporadasAPI = {
@@ -73,4 +95,5 @@ export const estadisticasAPI = {
     api.get('/estadisticas/goleo', { params: { temporadaId } }),
 };
 
+export { API_URL, extractApiErrorMessage };
 export default api;

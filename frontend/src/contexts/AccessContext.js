@@ -57,10 +57,10 @@ export const AccessProvider = ({ children }) => {
     bootstrap();
   }, [token, user?.role]);
 
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     setError('');
     try {
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(username, password);
       sessionStorage.setItem('authToken', response.data.token);
       sessionStorage.setItem('authUser', JSON.stringify(response.data.user));
       setToken(response.data.token);

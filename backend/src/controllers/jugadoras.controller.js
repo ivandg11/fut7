@@ -26,7 +26,7 @@ const listPlayers = async (req, res) => {
 
 const createPlayer = async (req, res) => {
   try {
-    const { equipoId, nombre, dorsal, posicion } = req.body;
+    const { equipoId, nombre, dorsal } = req.body;
     if (!equipoId || !nombre) {
       return res.status(400).json({ message: 'equipoId y nombre son requeridos' });
     }
@@ -46,7 +46,6 @@ const createPlayer = async (req, res) => {
         equipoId: Number(equipoId),
         nombre: nombre.trim(),
         dorsal: dorsal !== undefined && dorsal !== null ? Number(dorsal) : null,
-        posicion: posicion?.trim() || null,
       },
     });
 
@@ -69,13 +68,12 @@ const updatePlayer = async (req, res) => {
       return res.status(403).json({ message: 'No puedes actualizar esta jugadora' });
     }
 
-    const { nombre, dorsal, posicion, activa } = req.body;
+    const { nombre, dorsal, activa } = req.body;
     const player = await prisma.player.update({
       where: { id },
       data: {
         ...(nombre !== undefined ? { nombre: nombre.trim() } : {}),
         ...(dorsal !== undefined ? { dorsal: dorsal === null ? null : Number(dorsal) } : {}),
-        ...(posicion !== undefined ? { posicion: posicion?.trim() || null } : {}),
         ...(activa !== undefined ? { activa: Boolean(activa) } : {}),
       },
     });

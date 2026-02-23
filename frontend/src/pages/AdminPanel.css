@@ -1,0 +1,257 @@
+.admin-panel-container {
+  max-width: 1180px;
+  margin: 1.4rem auto 0;
+  padding: 0 1rem 1.5rem;
+}
+
+.admin-panel-header {
+  margin-bottom: 1rem;
+}
+
+.admin-panel-header h2 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(1.4rem, 2.9vw, 2rem);
+}
+
+.admin-panel-header p {
+  margin: 0.42rem 0 0;
+  color: var(--text-muted);
+}
+
+.admin-role-badge {
+  margin-top: 0.68rem;
+  display: inline-flex;
+  padding: 0.32rem 0.68rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(148, 163, 184, 0.12);
+  color: #d4deec;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-panel-toolbar {
+  padding: 2rem;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.96), rgba(11, 18, 32, 0.96));
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1rem;
+}
+
+.admin-warning-card {
+  margin-bottom: 1rem;
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: linear-gradient(180deg, rgba(127, 29, 29, 0.26), rgba(69, 10, 10, 0.18));
+  color: #ffd7d7;
+  font-weight: 600;
+}
+
+.admin-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.admin-module-card {
+  border-radius: 18px;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.98), rgba(11, 18, 32, 0.96));
+  box-shadow: var(--shadow-md);
+  display: grid;
+  gap: 0.9rem;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-module-card:hover {
+  transform: translateY(-2px);
+  border-color: #415372;
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-module-card h3 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.08rem;
+}
+
+.admin-module-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.admin-module-card .btn-primary,
+.admin-module-card .btn-secondary {
+  width: fit-content;
+}
+
+.admin-playoff-card {
+  margin-top: 1rem;
+  border-radius: 18px;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.98), rgba(11, 18, 32, 0.96));
+  box-shadow: var(--shadow-md);
+}
+
+.admin-playoff-card h3 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+}
+
+.admin-playoff-card p {
+  margin: 0.55rem 0 1rem;
+  color: var(--text-muted);
+}
+
+.admin-playoff-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.admin-playoff-form .form-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.admin-playoff-form .form-group label {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.admin-playoff-form input,
+.admin-playoff-form select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.62rem 0.75rem;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.admin-playoff-form input:focus,
+.admin-playoff-form select:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.admin-playoff-card .success-message,
+.admin-playoff-card .error-message {
+  margin-top: 0.8rem;
+  margin-bottom: 0;
+}
+
+.admin-login-wrap {
+  min-height: calc(100vh - 180px);
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.admin-login-card {
+  width: min(100%, 460px);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.98), rgba(11, 18, 32, 0.96));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 32px;
+}
+
+.admin-login-card h2 {
+  margin: 0 0 8px;
+  font-family: 'Sora', sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.admin-login-subtitle {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+}
+
+.admin-login-role {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+
+.admin-login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-login-form .form-group {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-login-form .form-group label {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.admin-login-form .form-group input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.97rem;
+}
+
+.admin-login-form .form-group input::placeholder {
+  color: #87a0b8;
+}
+
+.admin-login-form .form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
+.admin-login-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.admin-login-form .error-message {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 768px) {
+  .admin-panel-container {
+    padding: 0 0.82rem 1rem;
+  }
+
+  .admin-panel-toolbar,
+  .admin-module-card,
+  .admin-playoff-card {
+    padding: 1.15rem;
+  }
+
+  .admin-playoff-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-playoff-form .btn-primary {
+    width: 100%;
+  }
+
+  .admin-login-card {
+    padding: 22px 16px;
+  }
+}
