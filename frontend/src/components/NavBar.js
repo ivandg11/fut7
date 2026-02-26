@@ -6,6 +6,7 @@ import './NavBar.css';
 const NavBar = () => {
   const { user, isAdmin, logout } = useAccess();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAuthenticated = !!user && user.role !== 'VISITOR';
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -63,7 +64,7 @@ const NavBar = () => {
         </div>
 
         <div className="nav-access">
-          {isAdmin ? (
+          {isAuthenticated ? (
             <button
               onClick={() => {
                 logout();
@@ -71,7 +72,7 @@ const NavBar = () => {
               }}
               className="btn-logout"
             >
-              Salir ({user?.nombre || 'Admin'})
+              Salir ({user?.nombre || user?.role || 'Usuario'})
             </button>
           ) : (
             <Link to="/admin" className="btn-admin" onClick={closeMenu}>

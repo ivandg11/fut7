@@ -21,6 +21,8 @@ const AdminPanel = () => {
     setError: setAuthError,
   } = useAccess();
   const { temporadaActual } = useLiga();
+  const isSilla = role === 'silla';
+  const isSuperAdmin = role === 'SUPER_ADMIN';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [liguillaLoading, setLiguillaLoading] = useState(false);
@@ -125,7 +127,7 @@ const AdminPanel = () => {
     }
   };
 
-  if (!isAdmin) {
+  if (!isAdmin && !isSilla) {
     return (
       <div className="admin-panel-container admin-login-wrap">
         <div className="admin-login-card">
@@ -160,6 +162,26 @@ const AdminPanel = () => {
     );
   }
 
+  if (isSilla) {
+    return (
+      <div className="admin-panel-container">
+        <header className="admin-panel-header">
+          <h2>Panel de Administracion</h2>
+          <p>Tu rol solo permite registrar y editar marcadores.</p>
+          <span className="admin-role-badge">Sesion activa: {role}</span>
+        </header>
+        <section className="admin-warning-card">
+          Usa el modulo de partidos para capturar resultados.
+          <div style={{ marginTop: 12 }}>
+            <Link className="btn-primary" to="/partidos">
+              Ir a Partidos
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-panel-container">
       <header className="admin-panel-header">
@@ -182,8 +204,9 @@ const AdminPanel = () => {
         <article className="admin-module-card">
           <h3>Gestion de Ligas</h3>
           <p>
-            Crea, edita y organiza ligas junto con sus temporadas desde el modulo
-            dedicado.
+            {isSuperAdmin
+              ? 'Crea, edita y organiza ligas junto con sus temporadas desde el modulo dedicado.'
+              : 'Consulta y elimina ligas desde el modulo dedicado.'}
           </p>
           <Link className="btn-primary" to="/temporadas">
             Ir a Ligas

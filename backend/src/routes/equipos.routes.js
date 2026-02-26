@@ -13,19 +13,19 @@ router.get('/:id', getTeamById);
 router.post(
   '/',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   createTeam,
 );
 router.put(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   updateTeam,
 );
 router.delete(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   deleteTeam,
 );
 

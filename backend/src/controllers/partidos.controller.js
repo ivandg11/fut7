@@ -2,7 +2,11 @@ const prisma = require('../lib/prisma');
 
 const canManageLeague = (user, ligaId) =>
   user.role === 'SUPER_ADMIN' ||
-  (user.role === 'LEAGUE_ADMIN' && Number(user.ligaId) === Number(ligaId));
+  (user.role === 'admin' && Number(user.ligaId) === Number(ligaId));
+
+const canScoreLeague = (user, ligaId) =>
+  canManageLeague(user, ligaId) ||
+  (user.role === 'silla' && Number(user.ligaId) === Number(ligaId));
 
 const listMatches = async (req, res) => {
   try {
@@ -124,7 +128,7 @@ const registerResult = async (req, res) => {
       },
     });
     if (!match) return res.status(404).json({ message: 'Partido no encontrado' });
-    if (!canManageLeague(req.user, match.temporada.ligaId)) {
+    if (!canScoreLeague(req.user, match.temporada.ligaId)) {
       return res.status(403).json({ message: 'No puedes registrar este resultado' });
     }
 
@@ -193,6 +197,26 @@ const registerResult = async (req, res) => {
   }
 };
 
+const deleteMatch = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const existing = await prisma.match.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!existing) return res.status(404).json({ message: 'Partido no encontrado' });
+
+    if (!canManageLeague(req.user, existing.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes eliminar este partido' });
+    }
+
+    await prisma.match.delete({ where: { id } });
+    return res.json({ message: 'Partido eliminado' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al eliminar partido', error: error.message });
+  }
+};
+
 const goalsToPlayerIds = (goles) => {
   const ids = [];
   for (const goal of goles) {
@@ -207,4 +231,5 @@ module.exports = {
   createMatch,
   updateMatch,
   registerResult,
+  deleteMatch,
 };

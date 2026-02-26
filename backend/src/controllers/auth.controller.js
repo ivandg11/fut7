@@ -101,10 +101,17 @@ const getMe = async (req, res) => {
 
 const createLeagueAdmin = async (req, res) => {
   try {
-    const { email, nombre, password, ligaId } = req.body;
+    const { email, nombre, password, ligaId, role } = req.body;
     if (!email || !nombre || !password || !ligaId) {
       return res.status(400).json({
         message: 'email, nombre, password y ligaId son requeridos',
+      });
+    }
+
+    const normalizedRole = role ? String(role).trim().toLowerCase() : 'admin';
+    if (!['admin', 'silla'].includes(normalizedRole)) {
+      return res.status(400).json({
+        message: 'role invalido. Valores permitidos: admin, silla',
       });
     }
 
@@ -117,7 +124,7 @@ const createLeagueAdmin = async (req, res) => {
         email: email.toLowerCase().trim(),
         nombre: nombre.trim(),
         passwordHash,
-        role: 'LEAGUE_ADMIN',
+        role: normalizedRole,
         ligaId: Number(ligaId),
       },
       select: { id: true, email: true, nombre: true, role: true, ligaId: true },

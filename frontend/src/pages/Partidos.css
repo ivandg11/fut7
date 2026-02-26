@@ -239,6 +239,11 @@
   border-top: 1px solid var(--border);
   padding: 2rem;
 }
+.partido-admin > .btn-primary,
+.partido-admin > .btn-danger {
+  min-width: 180px;
+  margin-right: 0.65rem;
+}
 
 .resultado-editor h4 {
   margin: 0 0 1rem;
@@ -435,6 +440,49 @@
   animation: save-feedback 320ms ease;
 }
 
+.partido-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2, 6, 23, 0.66);
+  backdrop-filter: blur(4px);
+}
+
+.partido-delete-modal {
+  width: min(560px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.98), rgba(11, 18, 32, 0.97));
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.5);
+  padding: 1.35rem 1.35rem 1.2rem;
+  animation: modal-fade-in 170ms ease;
+}
+
+.partido-delete-modal h3 {
+  margin: 0 0 0.75rem;
+  font-family: 'Sora', sans-serif;
+}
+
+.partido-delete-modal p {
+  margin: 0 0 0.55rem;
+  color: #d6e1ee;
+}
+
+.partido-delete-note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.partido-delete-actions {
+  margin-top: 0.95rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
 @keyframes score-pop {
   0% {
     transform: scale(0.98);
@@ -463,6 +511,17 @@
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes modal-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -530,5 +589,14 @@
 
   .editor-actions {
     flex-direction: column;
+  }
+
+  .partido-delete-actions {
+    flex-direction: column-reverse;
+  }
+
+  .partido-delete-actions .btn-danger,
+  .partido-delete-actions .btn-secondary {
+    width: 100%;
   }
 }

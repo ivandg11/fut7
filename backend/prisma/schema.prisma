@@ -9,7 +9,8 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
-  LEAGUE_ADMIN
+  admin
+  silla
   VISITOR
 }
 

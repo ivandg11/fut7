@@ -13,8 +13,9 @@ import './Partidos.css';
 const CANCHAS_DISPONIBLES = ['Cancha 1', 'Cancha 2', 'Cancha 3', 'Cancha 4'];
 
 const Partidos = () => {
-  const { isAdmin } = useAccess();
+  const { role, canScoreMatches } = useAccess();
   const { temporadaActual, ligaActual } = useLiga();
+  const canManageMatches = role === 'SUPER_ADMIN' || role === 'admin';
 
   const [partidos, setPartidos] = useState([]);
   const [equipos, setEquipos] = useState([]);
@@ -37,6 +38,7 @@ const Partidos = () => {
   const [asistenciaEditor, setAsistenciaEditor] = useState({});
   const [equipoGol, setEquipoGol] = useState('local');
   const [jugadoraGolId, setJugadoraGolId] = useState('');
+  const [partidoAEliminar, setPartidoAEliminar] = useState(null);
 
   const cargarPartidos = async () => {
     if (!temporadaActual?.id) {
@@ -63,7 +65,7 @@ const Partidos = () => {
 
   useEffect(() => {
     const cargarCatalogos = async () => {
-      if (!temporadaActual?.id || !isAdmin) {
+      if (!temporadaActual?.id || !canScoreMatches) {
         setEquipos([]);
         setJugadoras([]);
         return;
@@ -81,7 +83,7 @@ const Partidos = () => {
       }
     };
     cargarCatalogos();
-  }, [temporadaActual?.id, isAdmin]);
+  }, [temporadaActual?.id, canScoreMatches]);
 
   const formatFecha = (iso) =>
     new Date(iso).toLocaleString('es-MX', {
@@ -116,6 +118,21 @@ const Partidos = () => {
       setError(
         `No fue posible programar partido: ${extractApiErrorMessage(err)}`,
       );
+    }
+  };
+
+  const confirmarEliminarPartido = async () => {
+    if (!partidoAEliminar) return;
+    setError('');
+    setOk('');
+    try {
+      await partidosAPI.delete(partidoAEliminar.id);
+      if (editorPartidoId === partidoAEliminar.id) cerrarEditor();
+      await cargarPartidos();
+      setPartidoAEliminar(null);
+      setOk('Partido eliminado. La tabla se recalculara con los partidos vigentes.');
+    } catch (err) {
+      setError(`No fue posible eliminar partido: ${extractApiErrorMessage(err)}`);
     }
   };
 
@@ -257,7 +274,7 @@ const Partidos = () => {
       {ok && <div className="success-message">{ok}</div>}
       {loading && <div className="loading-spinner">Cargando partidos...</div>}
 
-      {isAdmin && !!temporadaActual && (
+      {canManageMatches && !!temporadaActual && (
         <div className="modal-content partido-programar">
           <h3>Programar Partido</h3>
           <form onSubmit={crearPartido} className="partido-programar-form">
@@ -419,17 +436,28 @@ const Partidos = () => {
                 </span>
               </div>
 
-              {isAdmin && (
+              {canScoreMatches && (
                 <div className="partido-admin">
                   {editorPartidoId !== partido.id ? (
-                    <button
-                      className="btn-primary"
-                      onClick={() => abrirEditor(partido)}
-                    >
-                      {partido.status === 'PROGRAMADO'
-                        ? 'Iniciar Partido'
-                        : 'Gestionar Resultado'}
-                    </button>
+                    <>
+                      <button
+                        className="btn-primary"
+                        onClick={() => abrirEditor(partido)}
+                      >
+                        {partido.status === 'PROGRAMADO'
+                          ? 'Iniciar Partido'
+                          : 'Gestionar Resultado'}
+                      </button>
+                      {canManageMatches && (
+                        <button
+                          type="button"
+                          className="btn-danger"
+                          onClick={() => setPartidoAEliminar(partido)}
+                        >
+                          Eliminar Partido
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <div className="resultado-editor">
                       <h4>Resultado en vivo</h4>
@@ -622,6 +650,47 @@ const Partidos = () => {
           </div>
         )}
       </div>
+
+      {partidoAEliminar && (
+        <div
+          className="partido-delete-overlay"
+          onClick={() => setPartidoAEliminar(null)}
+        >
+          <div
+            className="partido-delete-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Eliminar partido</h3>
+            <p>
+              Vas a eliminar el partido{' '}
+              <strong>
+                {partidoAEliminar.equipoLocal.nombre} vs{' '}
+                {partidoAEliminar.equipoVisita.nombre}
+              </strong>
+              .
+            </p>
+            <p className="partido-delete-note">
+              Esta accion impacta la tabla de posiciones y estadisticas de goleo.
+            </p>
+            <div className="partido-delete-actions">
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={confirmarEliminarPartido}
+              >
+                Si, eliminar
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setPartidoAEliminar(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,19 +11,19 @@ router.get('/', listPlayers);
 router.post(
   '/',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   createPlayer,
 );
 router.put(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   updatePlayer,
 );
 router.delete(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   deletePlayer,
 );
 

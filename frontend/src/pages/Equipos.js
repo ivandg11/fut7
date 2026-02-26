@@ -276,7 +276,7 @@ const Equipos = () => {
     equipo.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const canManage = role === 'SUPER_ADMIN' || role === 'LEAGUE_ADMIN';
+  const canManage = role === 'SUPER_ADMIN' || role === 'admin';
 
   if (ligaLoading) {
     return <div className="loading-spinner">Cargando ligas...</div>;

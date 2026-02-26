@@ -55,14 +55,14 @@ const TablaPosiciones = () => {
 
       {!!tabla.length && (
         <section className="tabla-insights">
-          <article className="tabla-insight-card">
-            <span className="insight-label">Mejor defensa </span>
-            <strong>{mejorDefensa?.equipo} </strong>
+          <article className="tabla-insight-card defensa">
+            <span className="insight-label">Mejor defensa</span>
+            <strong>{mejorDefensa?.equipo}</strong>
             <span className="insight-value">{mejorDefensa?.gc ?? 0} GC</span>
           </article>
-          <article className="tabla-insight-card">
+          <article className="tabla-insight-card ofensiva">
             <span className="insight-label">Mejor ofensiva</span>
-            <strong>{mejorOfensiva?.equipo} </strong>
+            <strong>{mejorOfensiva?.equipo}</strong>
             <span className="insight-value">{mejorOfensiva?.gf ?? 0} GF</span>
           </article>
         </section>
@@ -98,7 +98,7 @@ const TablaPosiciones = () => {
               {tabla.map((row, index) => (
                 <tr
                   key={row.equipoId}
-                  className={`${index < 8 ? 'liguilla-zone' : ''} ${index === 0 ? 'is-first' : ''}`}
+                  className={`${index < 8 ? 'liguilla-zone' : ''} ${index === 0 ? 'is-first' : ''} ${row.equipoId === mejorDefensa?.equipoId ? 'is-best-defense' : ''} ${row.equipoId === mejorOfensiva?.equipoId ? 'is-best-offense' : ''}`}
                 >
                   <td className="posicion">
                     <span className="rank-pill">{row.posicion}</span>
@@ -108,8 +108,8 @@ const TablaPosiciones = () => {
                   <td className="ganados">{row.pg}</td>
                   <td>{row.pe}</td>
                   <td className="perdidos">{row.pp}</td>
-                  <td>{row.gf}</td>
-                  <td>{row.gc}</td>
+                  <td className={row.equipoId === mejorOfensiva?.equipoId ? 'metric-highlight offense' : ''}>{row.gf}</td>
+                  <td className={row.equipoId === mejorDefensa?.equipoId ? 'metric-highlight defense' : ''}>{row.gc}</td>
                   <td
                     className={`diferencia ${row.dg > 0 ? 'positiva' : row.dg < 0 ? 'negativa' : ''}`}
                   >

@@ -2,7 +2,7 @@ const prisma = require('../lib/prisma');
 
 const canManageLeague = (user, ligaId) =>
   user.role === 'SUPER_ADMIN' ||
-  (user.role === 'LEAGUE_ADMIN' && Number(user.ligaId) === Number(ligaId));
+  (user.role === 'admin' && Number(user.ligaId) === Number(ligaId));
 
 const listTeams = async (req, res) => {
   try {

@@ -5,7 +5,8 @@ import { extractApiErrorMessage, ligasAPI, temporadasAPI } from '../services/api
 import './Temporadas.css';
 
 const Temporadas = () => {
-  const { isAdmin } = useAccess();
+  const { isAdmin, role } = useAccess();
+  const canCreateLeague = role === 'SUPER_ADMIN';
   const {
     ligas,
     ligaActual,
@@ -135,7 +136,7 @@ const Temporadas = () => {
         {!ligas.length && (
           <div className="no-data">
             No hay ligas registradas.
-            {isAdmin ? ' Crea la primera liga para continuar.' : ''}
+            {canCreateLeague ? ' Crea la primera liga para continuar.' : ''}
           </div>
         )}
 
@@ -258,7 +259,7 @@ const Temporadas = () => {
           </div>
         )}
 
-        {isAdmin && (
+        {canCreateLeague && (
           <div className="modal-content temporada-form-wrap">
             <h3>Nueva Liga</h3>
             <form onSubmit={crearLiga} className="temporada-form">

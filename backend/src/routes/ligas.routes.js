@@ -12,6 +12,6 @@ router.get('/', listLeagues);
 router.get('/:id', getLeagueById);
 router.post('/', authRequired, requireRoles('SUPER_ADMIN'), createLeague);
 router.put('/:id', authRequired, requireRoles('SUPER_ADMIN'), updateLeague);
-router.delete('/:id', authRequired, requireRoles('SUPER_ADMIN'), deleteLeague);
+router.delete('/:id', authRequired, requireRoles('SUPER_ADMIN', 'admin'), deleteLeague);
 
 module.exports = router;

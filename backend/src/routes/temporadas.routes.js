@@ -11,19 +11,19 @@ router.get('/', listSeasons);
 router.post(
   '/',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   createSeason,
 );
 router.put(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   updateSeason,
 );
 router.delete(
   '/:id',
   authRequired,
-  requireRoles('SUPER_ADMIN', 'LEAGUE_ADMIN'),
+  requireRoles('SUPER_ADMIN', 'admin'),
   deleteSeason,
 );
 

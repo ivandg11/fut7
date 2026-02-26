@@ -86,7 +86,9 @@ export const AccessProvider = ({ children }) => {
     () => ({
       user,
       role: user?.role || 'VISITOR',
-      isAdmin: user?.role === 'SUPER_ADMIN' || user?.role === 'LEAGUE_ADMIN',
+      isAdmin: user?.role === 'SUPER_ADMIN' || user?.role === 'admin',
+      canScoreMatches:
+        user?.role === 'SUPER_ADMIN' || user?.role === 'admin' || user?.role === 'silla',
       token,
       loading,
       error,
