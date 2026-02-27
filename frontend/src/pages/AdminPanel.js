@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import LigaSelector from '../components/LigaSelector';
 import { useAccess } from '../contexts/AccessContext';
@@ -15,6 +15,7 @@ const CANCHAS_LIGUILLA = ['Cancha 1', 'Cancha 2', 'Cancha 3', 'Cancha 4'];
 
 const AdminPanel = () => {
   const {
+    user,
     role,
     isAdmin,
     login,
@@ -39,6 +40,10 @@ const AdminPanel = () => {
   const [newUserLoading, setNewUserLoading] = useState(false);
   const [newUserErr, setNewUserErr] = useState('');
   const [newUserMsg, setNewUserMsg] = useState('');
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersErr, setUsersErr] = useState('');
+  const [deletingUserId, setDeletingUserId] = useState(null);
 
   const fechaSugerida = useMemo(() => {
     const d = new Date();
@@ -156,6 +161,7 @@ const AdminPanel = () => {
       setNewUserMsg(
         `Usuario creado: ${created.nombre} (${created.role})`,
       );
+      await loadUsers();
       setNewUserNombre('');
       setNewUserEmail('');
       setNewUserPassword('');
@@ -167,6 +173,45 @@ const AdminPanel = () => {
       setNewUserLoading(false);
     }
   };
+
+  const loadUsers = useCallback(async () => {
+    if (!isSuperAdmin) return;
+    setUsersLoading(true);
+    setUsersErr('');
+    try {
+      const response = await authAPI.getUsers();
+      setUsers(response.data);
+    } catch (err) {
+      setUsersErr(`No fue posible cargar usuarios: ${extractApiErrorMessage(err)}`);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [isSuperAdmin]);
+
+  const handleDeleteUser = async (targetUser) => {
+    const confirmed = window.confirm(
+      `Se eliminara el usuario "${targetUser.nombre}" (${targetUser.email}). Esta accion no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+
+    setUsersErr('');
+    setNewUserMsg('');
+    try {
+      setDeletingUserId(targetUser.id);
+      await authAPI.deleteUser(targetUser.id);
+      await loadUsers();
+    } catch (err) {
+      setUsersErr(`No fue posible eliminar usuario: ${extractApiErrorMessage(err)}`);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      loadUsers();
+    }
+  }, [isSuperAdmin, loadUsers]);
 
   if (!isAdmin && !isSilla) {
     return (
@@ -339,6 +384,72 @@ const AdminPanel = () => {
           </form>
           {newUserErr && <div className="error-message">{newUserErr}</div>}
           {newUserMsg && <div className="success-message">{newUserMsg}</div>}
+        </section>
+      )}
+
+      {isSuperAdmin && (
+        <section className="admin-users-list-card">
+          <div className="admin-users-list-head">
+            <h3>Usuarios Registrados</h3>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={loadUsers}
+              disabled={usersLoading}
+            >
+              {usersLoading ? 'Actualizando...' : 'Actualizar'}
+            </button>
+          </div>
+
+          {usersErr && <div className="error-message">{usersErr}</div>}
+
+          <div className="admin-users-table-wrap">
+            <table className="admin-users-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Activo</th>
+                  <th>Alta</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!usersLoading && users.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="admin-users-empty">
+                      No hay usuarios registrados.
+                    </td>
+                  </tr>
+                )}
+                {users.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.nombre}</td>
+                    <td>{row.email}</td>
+                    <td>{row.role}</td>
+                    <td>{row.activo ? 'Si' : 'No'}</td>
+                    <td>{new Date(row.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-danger-soft"
+                        onClick={() => handleDeleteUser(row)}
+                        disabled={deletingUserId === row.id || Number(row.id) === Number(user?.id)}
+                        title={
+                          Number(row.id) === Number(user?.id)
+                            ? 'No puedes eliminar tu propio usuario'
+                            : 'Eliminar usuario'
+                        }
+                      >
+                        {deletingUserId === row.id ? 'Eliminando...' : 'Eliminar'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

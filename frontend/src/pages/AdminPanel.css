@@ -176,6 +176,86 @@
   margin-bottom: 0;
 }
 
+.admin-users-list-card {
+  margin-top: 1rem;
+  border-radius: 18px;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  background: linear-gradient(170deg, rgba(17, 24, 39, 0.98), rgba(11, 18, 32, 0.96));
+  box-shadow: var(--shadow-md);
+}
+
+.admin-users-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.admin-users-list-head h3 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+}
+
+.admin-users-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  background: rgba(9, 13, 24, 0.45);
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 0.72rem 0.78rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.admin-users-table th {
+  color: #c8d6e8;
+  background: rgba(30, 41, 59, 0.45);
+  font-weight: 700;
+}
+
+.admin-users-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.admin-users-empty {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 1rem !important;
+}
+
+.btn-danger-soft {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+  border-radius: 10px;
+  padding: 0.45rem 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger-soft:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.25);
+  border-color: rgba(248, 113, 113, 0.75);
+}
+
+.btn-danger-soft:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .admin-playoff-card h3 {
   margin: 0;
   font-family: 'Sora', sans-serif;
@@ -314,6 +394,7 @@
   .admin-panel-toolbar,
   .admin-module-card,
   .admin-users-card,
+  .admin-users-list-card,
   .admin-playoff-card {
     padding: 1.15rem;
   }

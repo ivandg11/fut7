@@ -186,6 +186,57 @@ const createUserBySuperAdmin = async (req, res) => {
   }
 };
 
+const listUsersBySuperAdmin = async (_req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        role: true,
+        ligaId: true,
+        activo: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return res.json(users);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al listar usuarios', error: error.message });
+  }
+};
+
+const deleteUserBySuperAdmin = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ message: 'id invalido' });
+
+    if (Number(req.user?.sub) === id) {
+      return res.status(400).json({ message: 'No puedes eliminar tu propio usuario' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, nombre: true },
+    });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    if (user.role === 'SUPER_ADMIN') {
+      const superAdminCount = await prisma.user.count({ where: { role: 'SUPER_ADMIN', activo: true } });
+      if (superAdminCount <= 1) {
+        return res.status(400).json({
+          message: 'No puedes eliminar el ultimo SUPER_ADMIN activo',
+        });
+      }
+    }
+
+    await prisma.user.delete({ where: { id } });
+    return res.json({ message: 'Usuario eliminado' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al eliminar usuario', error: error.message });
+  }
+};
+
 const visitorToken = async (_req, res) => {
   const token = jwt.sign(
     {
@@ -209,5 +260,7 @@ module.exports = {
   getMe,
   createLeagueAdmin,
   createUserBySuperAdmin,
+  listUsersBySuperAdmin,
+  deleteUserBySuperAdmin,
   visitorToken,
 };
