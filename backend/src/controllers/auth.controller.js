@@ -139,6 +139,65 @@ const createLeagueAdmin = async (req, res) => {
   }
 };
 
+const normalizeRole = (role) => {
+  const value = String(role || '').trim().toLowerCase();
+  if (value === 'super_admin') return 'SUPER_ADMIN';
+  if (value === 'visitor') return 'VISITOR';
+  if (value === 'admin') return 'admin';
+  if (value === 'silla') return 'silla';
+  return null;
+};
+
+const createUserBySuperAdmin = async (req, res) => {
+  try {
+    const { email, nombre, password, role, ligaId, activo } = req.body;
+    if (!email || !nombre || !password || !role) {
+      return res.status(400).json({
+        message: 'email, nombre, password y role son requeridos',
+      });
+    }
+
+    const normalizedRole = normalizeRole(role);
+    if (!normalizedRole) {
+      return res.status(400).json({
+        message: 'role invalido. Valores permitidos: SUPER_ADMIN, admin, silla, VISITOR',
+      });
+    }
+
+    let nextLigaId = null;
+    if (['admin', 'silla'].includes(normalizedRole)) {
+      if (!ligaId) {
+        return res.status(400).json({
+          message: 'ligaId es requerido para roles admin y silla',
+        });
+      }
+      const liga = await prisma.league.findUnique({ where: { id: Number(ligaId) } });
+      if (!liga) return res.status(404).json({ message: 'Liga no encontrada' });
+      nextLigaId = Number(ligaId);
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase().trim(),
+        nombre: nombre.trim(),
+        passwordHash,
+        role: normalizedRole,
+        ligaId: nextLigaId,
+        activo: activo === false ? false : true,
+      },
+      select: { id: true, email: true, nombre: true, role: true, ligaId: true, activo: true },
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'El correo ya esta registrado' });
+    }
+    return res.status(500).json({ message: 'Error al crear usuario', error: error.message });
+  }
+};
+
 const visitorToken = async (_req, res) => {
   const token = jwt.sign(
     {
@@ -161,5 +220,6 @@ module.exports = {
   login,
   getMe,
   createLeagueAdmin,
+  createUserBySuperAdmin,
   visitorToken,
 };

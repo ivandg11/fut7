@@ -46,6 +46,7 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
   visitorToken: () => api.post('/auth/visitor-token'),
   createLeagueAdmin: (data) => api.post('/auth/league-admin', data),
+  createUser: (data) => api.post('/auth/users', data),
 };
 
 export const ligasAPI = {

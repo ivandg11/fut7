@@ -4,6 +4,7 @@ import LigaSelector from '../components/LigaSelector';
 import { useAccess } from '../contexts/AccessContext';
 import { useLiga } from '../contexts/LigaContext';
 import {
+  authAPI,
   estadisticasAPI,
   partidosAPI,
   extractApiErrorMessage,
@@ -20,7 +21,7 @@ const AdminPanel = () => {
     error: authError,
     setError: setAuthError,
   } = useAccess();
-  const { temporadaActual } = useLiga();
+  const { temporadaActual, ligas, ligaActual } = useLiga();
   const isSilla = role === 'silla';
   const isSuperAdmin = role === 'SUPER_ADMIN';
   const [username, setUsername] = useState('');
@@ -30,6 +31,15 @@ const AdminPanel = () => {
   const [liguillaErr, setLiguillaErr] = useState('');
   const [liguillaFechaBase, setLiguillaFechaBase] = useState('');
   const [liguillaCanchaBase, setLiguillaCanchaBase] = useState('Cancha 1');
+  const [newUserNombre, setNewUserNombre] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('admin');
+  const [newUserLigaId, setNewUserLigaId] = useState('');
+  const [newUserActivo, setNewUserActivo] = useState(true);
+  const [newUserLoading, setNewUserLoading] = useState(false);
+  const [newUserErr, setNewUserErr] = useState('');
+  const [newUserMsg, setNewUserMsg] = useState('');
 
   const fechaSugerida = useMemo(() => {
     const d = new Date();
@@ -124,6 +134,50 @@ const AdminPanel = () => {
       );
     } finally {
       setLiguillaLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setNewUserErr('');
+    setNewUserMsg('');
+
+    const roleNeedsLeague = ['admin', 'silla'].includes(newUserRole);
+    const leagueIdToUse = roleNeedsLeague
+      ? Number(newUserLigaId || ligaActual?.id || 0)
+      : null;
+
+    if (roleNeedsLeague && !leagueIdToUse) {
+      setNewUserErr('Selecciona una liga para usuarios admin o silla.');
+      return;
+    }
+
+    try {
+      setNewUserLoading(true);
+      const payload = {
+        nombre: newUserNombre.trim(),
+        email: newUserEmail.trim().toLowerCase(),
+        password: newUserPassword,
+        role: newUserRole,
+        activo: newUserActivo,
+      };
+      if (leagueIdToUse) payload.ligaId = leagueIdToUse;
+
+      const response = await authAPI.createUser(payload);
+      const created = response.data;
+      setNewUserMsg(
+        `Usuario creado: ${created.nombre} (${created.role})`,
+      );
+      setNewUserNombre('');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserRole('admin');
+      setNewUserLigaId('');
+      setNewUserActivo(true);
+    } catch (err) {
+      setNewUserErr(`No fue posible crear usuario: ${extractApiErrorMessage(err)}`);
+    } finally {
+      setNewUserLoading(false);
     }
   };
 
@@ -234,6 +288,89 @@ const AdminPanel = () => {
           </Link>
         </article>
       </section>
+
+      {isSuperAdmin && (
+        <section className="admin-users-card">
+          <h3>Alta de Usuarios</h3>
+          <p>
+            Crea usuarios nuevos con rol y, cuando aplica, asignacion de liga.
+          </p>
+
+          <form className="admin-users-form" onSubmit={handleCreateUser}>
+            <div className="form-group">
+              <label>Nombre</label>
+              <input
+                value={newUserNombre}
+                onChange={(e) => setNewUserNombre(e.target.value)}
+                required
+                maxLength={80}
+              />
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                required
+                maxLength={120}
+              />
+            </div>
+            <div className="form-group">
+              <label>Password temporal</label>
+              <input
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="form-group">
+              <label>Rol</label>
+              <select
+                value={newUserRole}
+                onChange={(e) => setNewUserRole(e.target.value)}
+              >
+                <option value="admin">admin</option>
+                <option value="silla">silla</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                <option value="VISITOR">VISITOR</option>
+              </select>
+            </div>
+            {['admin', 'silla'].includes(newUserRole) && (
+              <div className="form-group">
+                <label>Liga</label>
+                <select
+                  value={newUserLigaId}
+                  onChange={(e) => setNewUserLigaId(e.target.value)}
+                  required
+                >
+                  <option value="">Selecciona una liga</option>
+                  {ligas.map((liga) => (
+                    <option key={liga.id} value={liga.id}>
+                      {liga.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <label className="admin-users-checkbox">
+              <input
+                type="checkbox"
+                checked={newUserActivo}
+                onChange={(e) => setNewUserActivo(e.target.checked)}
+              />
+              Usuario activo
+            </label>
+            <button type="submit" className="btn-primary" disabled={newUserLoading}>
+              {newUserLoading ? 'Creando usuario...' : 'Crear usuario'}
+            </button>
+          </form>
+          {newUserErr && <div className="error-message">{newUserErr}</div>}
+          {newUserMsg && <div className="success-message">{newUserMsg}</div>}
+        </section>
+      )}
 
       <section className="admin-playoff-card">
         <h3>Iniciar Liguilla (Top 8)</h3>
