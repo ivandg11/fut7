@@ -150,7 +150,7 @@ const normalizeRole = (role) => {
 
 const createUserBySuperAdmin = async (req, res) => {
   try {
-    const { email, nombre, password, role, ligaId, activo } = req.body;
+    const { email, nombre, password, role, activo } = req.body;
     if (!email || !nombre || !password || !role) {
       return res.status(400).json({
         message: 'email, nombre, password y role son requeridos',
@@ -164,18 +164,6 @@ const createUserBySuperAdmin = async (req, res) => {
       });
     }
 
-    let nextLigaId = null;
-    if (['admin', 'silla'].includes(normalizedRole)) {
-      if (!ligaId) {
-        return res.status(400).json({
-          message: 'ligaId es requerido para roles admin y silla',
-        });
-      }
-      const liga = await prisma.league.findUnique({ where: { id: Number(ligaId) } });
-      if (!liga) return res.status(404).json({ message: 'Liga no encontrada' });
-      nextLigaId = Number(ligaId);
-    }
-
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
@@ -183,7 +171,7 @@ const createUserBySuperAdmin = async (req, res) => {
         nombre: nombre.trim(),
         passwordHash,
         role: normalizedRole,
-        ligaId: nextLigaId,
+        ligaId: null,
         activo: activo === false ? false : true,
       },
       select: { id: true, email: true, nombre: true, role: true, ligaId: true, activo: true },

@@ -21,7 +21,7 @@ const AdminPanel = () => {
     error: authError,
     setError: setAuthError,
   } = useAccess();
-  const { temporadaActual, ligas, ligaActual } = useLiga();
+  const { temporadaActual } = useLiga();
   const isSilla = role === 'silla';
   const isSuperAdmin = role === 'SUPER_ADMIN';
   const [username, setUsername] = useState('');
@@ -35,7 +35,6 @@ const AdminPanel = () => {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('admin');
-  const [newUserLigaId, setNewUserLigaId] = useState('');
   const [newUserActivo, setNewUserActivo] = useState(true);
   const [newUserLoading, setNewUserLoading] = useState(false);
   const [newUserErr, setNewUserErr] = useState('');
@@ -142,16 +141,6 @@ const AdminPanel = () => {
     setNewUserErr('');
     setNewUserMsg('');
 
-    const roleNeedsLeague = ['admin', 'silla'].includes(newUserRole);
-    const leagueIdToUse = roleNeedsLeague
-      ? Number(newUserLigaId || ligaActual?.id || 0)
-      : null;
-
-    if (roleNeedsLeague && !leagueIdToUse) {
-      setNewUserErr('Selecciona una liga para usuarios admin o silla.');
-      return;
-    }
-
     try {
       setNewUserLoading(true);
       const payload = {
@@ -161,7 +150,6 @@ const AdminPanel = () => {
         role: newUserRole,
         activo: newUserActivo,
       };
-      if (leagueIdToUse) payload.ligaId = leagueIdToUse;
 
       const response = await authAPI.createUser(payload);
       const created = response.data;
@@ -172,7 +160,6 @@ const AdminPanel = () => {
       setNewUserEmail('');
       setNewUserPassword('');
       setNewUserRole('admin');
-      setNewUserLigaId('');
       setNewUserActivo(true);
     } catch (err) {
       setNewUserErr(`No fue posible crear usuario: ${extractApiErrorMessage(err)}`);
@@ -293,7 +280,7 @@ const AdminPanel = () => {
         <section className="admin-users-card">
           <h3>Alta de Usuarios</h3>
           <p>
-            Crea usuarios nuevos con rol y, cuando aplica, asignacion de liga.
+            Crea usuarios nuevos con rol. La liga se asigna siempre en null.
           </p>
 
           <form className="admin-users-form" onSubmit={handleCreateUser}>
@@ -338,23 +325,6 @@ const AdminPanel = () => {
                 <option value="VISITOR">VISITOR</option>
               </select>
             </div>
-            {['admin', 'silla'].includes(newUserRole) && (
-              <div className="form-group">
-                <label>Liga</label>
-                <select
-                  value={newUserLigaId}
-                  onChange={(e) => setNewUserLigaId(e.target.value)}
-                  required
-                >
-                  <option value="">Selecciona una liga</option>
-                  {ligas.map((liga) => (
-                    <option key={liga.id} value={liga.id}>
-                      {liga.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
             <label className="admin-users-checkbox">
               <input
                 type="checkbox"
