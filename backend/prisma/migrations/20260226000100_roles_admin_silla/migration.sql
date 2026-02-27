@@ -1,9 +1,0 @@
-ALTER TABLE `User`
-  MODIFY `role` ENUM('SUPER_ADMIN', 'LEAGUE_ADMIN', 'admin', 'silla', 'VISITOR') NOT NULL DEFAULT 'VISITOR';
-
-UPDATE `User`
-SET `role` = 'admin'
-WHERE `role` = 'LEAGUE_ADMIN';
-
-ALTER TABLE `User`
-  MODIFY `role` ENUM('SUPER_ADMIN', 'admin', 'silla', 'VISITOR') NOT NULL DEFAULT 'VISITOR';
