@@ -86,6 +86,7 @@ model Team {
   localias    Match[]   @relation("MatchLocal")
   visitas     Match[]   @relation("MatchVisita")
   goles       MatchGoal[]
+  asistencias MatchAttendance[]
 
   @@unique([temporadaId, nombre])
 }
@@ -102,6 +103,7 @@ model Player {
 
   equipo      Team      @relation(fields: [equipoId], references: [id], onDelete: Cascade)
   goles       MatchGoal[]
+  asistencias MatchAttendance[]
 }
 
 model Match {
@@ -122,6 +124,7 @@ model Match {
   equipoLocal   Team       @relation("MatchLocal", fields: [equipoLocalId], references: [id], onDelete: Restrict)
   equipoVisita  Team       @relation("MatchVisita", fields: [equipoVisitaId], references: [id], onDelete: Restrict)
   goles         MatchGoal[]
+  asistencias   MatchAttendance[]
 
   @@index([temporadaId, jornada])
 }
@@ -138,6 +141,25 @@ model MatchGoal {
   jugadora   Player   @relation(fields: [jugadoraId], references: [id], onDelete: Restrict)
   equipo     Team     @relation(fields: [equipoId], references: [id], onDelete: Restrict)
 
+  @@index([partidoId])
+  @@index([jugadoraId])
+  @@index([equipoId])
+}
+
+model MatchAttendance {
+  id         Int      @id @default(autoincrement())
+  partidoId  Int
+  jugadoraId Int
+  equipoId   Int
+  presente   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  partido    Match    @relation(fields: [partidoId], references: [id], onDelete: Cascade)
+  jugadora   Player   @relation(fields: [jugadoraId], references: [id], onDelete: Restrict)
+  equipo     Team     @relation(fields: [equipoId], references: [id], onDelete: Restrict)
+
+  @@unique([partidoId, jugadoraId])
   @@index([partidoId])
   @@index([jugadoraId])
   @@index([equipoId])

@@ -119,11 +119,89 @@ const deleteTeam = async (req, res) => {
   }
 };
 
+const getTeamAttendanceReport = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ message: 'id de equipo invalido' });
+
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!team) return res.status(404).json({ message: 'Equipo no encontrado' });
+
+    const totalPartidos = await prisma.match.count({
+      where: {
+        temporadaId: team.temporadaId,
+        status: 'JUGADO',
+        OR: [{ equipoLocalId: id }, { equipoVisitaId: id }],
+      },
+    });
+
+    const players = await prisma.player.findMany({
+      where: { equipoId: id },
+      orderBy: { nombre: 'asc' },
+      select: {
+        id: true,
+        nombre: true,
+        dorsal: true,
+        activa: true,
+      },
+    });
+
+    const presentes = await prisma.matchAttendance.groupBy({
+      by: ['jugadoraId'],
+      where: { equipoId: id, presente: true },
+      _count: { _all: true },
+    });
+
+    const registros = await prisma.matchAttendance.groupBy({
+      by: ['jugadoraId'],
+      where: { equipoId: id },
+      _count: { _all: true },
+    });
+
+    const presentMap = new Map(presentes.map((r) => [r.jugadoraId, r._count._all]));
+    const recordsMap = new Map(registros.map((r) => [r.jugadoraId, r._count._all]));
+
+    const jugadoras = players.map((player) => {
+      const asistencias = presentMap.get(player.id) || 0;
+      const registrosCapturados = recordsMap.get(player.id) || 0;
+      const faltas = Math.max(registrosCapturados - asistencias, 0);
+      const porcentajeAsistencia = registrosCapturados
+        ? Number(((asistencias * 100) / registrosCapturados).toFixed(1))
+        : 0;
+
+      return {
+        jugadoraId: player.id,
+        nombre: player.nombre,
+        dorsal: player.dorsal,
+        activa: player.activa,
+        asistencias,
+        faltas,
+        registrosCapturados,
+        porcentajeAsistencia,
+      };
+    });
+
+    return res.json({
+      equipoId: team.id,
+      equipo: team.nombre,
+      temporadaId: team.temporadaId,
+      totalPartidos,
+      jugadoras,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al obtener asistencias', error: error.message });
+  }
+};
+
 module.exports = {
   listTeams,
   getTeamById,
   createTeam,
   updateTeam,
   deleteTeam,
+  getTeamAttendanceReport,
 };
 

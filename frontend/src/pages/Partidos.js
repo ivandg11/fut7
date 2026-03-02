@@ -146,6 +146,9 @@ const Partidos = () => {
     jugadorasPartido.forEach((j) => {
       asistenciaInicial[j.id] = false;
     });
+    (partido.asistencias || []).forEach((a) => {
+      asistenciaInicial[a.jugadoraId] = Boolean(a.presente);
+    });
 
     setEditorPartidoId(partido.id);
     setGolesEditor(
@@ -229,6 +232,10 @@ const Partidos = () => {
     try {
       const response = await partidosAPI.registrarResultado(partidoId, {
         goles: golesEditor,
+        asistencias: Object.entries(asistenciaEditor).map(([jugadoraId, presente]) => ({
+          jugadoraId: Number(jugadoraId),
+          presente: Boolean(presente),
+        })),
       });
       setPartidos((prev) =>
         prev.map((partido) =>

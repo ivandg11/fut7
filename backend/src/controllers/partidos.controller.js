@@ -25,6 +25,7 @@ const listMatches = async (req, res) => {
         goles: {
           include: { jugadora: true },
         },
+        asistencias: true,
       },
       orderBy: [{ jornada: 'asc' }, { fecha: 'asc' }],
     });
@@ -112,9 +113,12 @@ const updateMatch = async (req, res) => {
 const registerResult = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { goles } = req.body;
+    const { goles, asistencias } = req.body;
     if (!Array.isArray(goles)) {
       return res.status(400).json({ message: 'goles debe ser un arreglo [{ jugadoraId, minuto? }]' });
+    }
+    if (asistencias !== undefined && !Array.isArray(asistencias)) {
+      return res.status(400).json({ message: 'asistencias debe ser un arreglo [{ jugadoraId, presente }]' });
     }
 
     const match = await prisma.match.findUnique({
@@ -130,7 +134,8 @@ const registerResult = async (req, res) => {
       return res.status(403).json({ message: 'No puedes registrar este resultado' });
     }
 
-    const playerIds = goalsToPlayerIds(goles);
+    const attendanceRows = normalizeAttendances(asistencias || []);
+    const playerIds = [...new Set([...goalsToPlayerIds(goles), ...attendanceRows.map((a) => a.jugadoraId)])];
     const players = playerIds.length
       ? await prisma.player.findMany({
           where: { id: { in: playerIds } },
@@ -142,6 +147,28 @@ const registerResult = async (req, res) => {
     let golesLocal = 0;
     let golesVisita = 0;
     const goalsData = [];
+    const attendanceData = [];
+
+    for (const attendance of attendanceRows) {
+      const player = playersMap.get(attendance.jugadoraId);
+      if (!player) {
+        return res.status(400).json({ message: `Jugadora ${attendance.jugadoraId} no encontrada` });
+      }
+
+      const teamId = player.equipoId;
+      if (teamId !== match.equipoLocalId && teamId !== match.equipoVisitaId) {
+        return res.status(400).json({
+          message: `La jugadora ${player.nombre} no pertenece a equipos del partido`,
+        });
+      }
+
+      attendanceData.push({
+        partidoId: match.id,
+        jugadoraId: attendance.jugadoraId,
+        equipoId: teamId,
+        presente: attendance.presente,
+      });
+    }
 
     for (const goal of goles) {
       const jugadoraId = Number(goal.jugadoraId);
@@ -169,8 +196,12 @@ const registerResult = async (req, res) => {
 
     const updatedMatch = await prisma.$transaction(async (tx) => {
       await tx.matchGoal.deleteMany({ where: { partidoId: match.id } });
+      await tx.matchAttendance.deleteMany({ where: { partidoId: match.id } });
       if (goalsData.length) {
         await tx.matchGoal.createMany({ data: goalsData });
+      }
+      if (attendanceData.length) {
+        await tx.matchAttendance.createMany({ data: attendanceData });
       }
       return tx.match.update({
         where: { id: match.id },
@@ -185,6 +216,7 @@ const registerResult = async (req, res) => {
           goles: {
             include: { jugadora: true },
           },
+          asistencias: true,
         },
       });
     });
@@ -222,6 +254,19 @@ const goalsToPlayerIds = (goles) => {
     if (Number.isInteger(id) && id > 0) ids.push(id);
   }
   return [...new Set(ids)];
+};
+
+const normalizeAttendances = (asistencias) => {
+  const byPlayer = new Map();
+  for (const entry of asistencias) {
+    const jugadoraId = Number(entry?.jugadoraId);
+    if (!Number.isInteger(jugadoraId) || jugadoraId <= 0) continue;
+    byPlayer.set(jugadoraId, {
+      jugadoraId,
+      presente: Boolean(entry?.presente),
+    });
+  }
+  return Array.from(byPlayer.values());
 };
 
 module.exports = {

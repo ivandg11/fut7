@@ -28,6 +28,11 @@ const Equipos = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [equipoToDelete, setEquipoToDelete] = useState(null);
+  const [showAsistenciaModal, setShowAsistenciaModal] = useState(false);
+  const [equipoAsistencia, setEquipoAsistencia] = useState(null);
+  const [asistenciaData, setAsistenciaData] = useState(null);
+  const [asistenciaLoading, setAsistenciaLoading] = useState(false);
+  const [asistenciaError, setAsistenciaError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ nombre: '' });
@@ -181,6 +186,22 @@ const Equipos = () => {
   const confirmDelete = (equipo) => {
     setEquipoToDelete(equipo);
     setShowDeleteModal(true);
+  };
+
+  const abrirAsistenciaEquipo = async (equipo) => {
+    setShowAsistenciaModal(true);
+    setEquipoAsistencia(equipo);
+    setAsistenciaData(null);
+    setAsistenciaError('');
+    setAsistenciaLoading(true);
+    try {
+      const response = await equiposAPI.getAsistencias(equipo.id);
+      setAsistenciaData(response.data);
+    } catch (err) {
+      setAsistenciaError(`Error al cargar asistencias: ${extractApiErrorMessage(err)}`);
+    } finally {
+      setAsistenciaLoading(false);
+    }
   };
 
   const handleEdit = (equipo) => {
@@ -376,6 +397,9 @@ const Equipos = () => {
                   <button className="btn-edit" onClick={() => handleEdit(equipo)}>
                     Editar
                   </button>
+                  <button className="btn-attendance" onClick={() => abrirAsistenciaEquipo(equipo)}>
+                    Asistencias
+                  </button>
                   <button className="btn-delete" onClick={() => confirmDelete(equipo)}>
                     Eliminar
                   </button>
@@ -476,6 +500,66 @@ const Equipos = () => {
               </button>
               <button className="btn-secondary" onClick={() => setShowDeleteModal(false)}>
                 Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAsistenciaModal && equipoAsistencia && (
+        <div className="modal-overlay">
+          <div className="modal-content modal-attendance">
+            <h3>Asistencias - {equipoAsistencia.nombre}</h3>
+
+            {asistenciaError && <div className="error-message">{asistenciaError}</div>}
+            {asistenciaLoading && <div className="loading-spinner">Cargando asistencias...</div>}
+
+            {!asistenciaLoading && asistenciaData && (
+              <>
+                <p className="attendance-summary">
+                  Partidos jugados con captura: <strong>{asistenciaData.totalPartidos}</strong>
+                </p>
+                <div className="attendance-table-wrap">
+                  <table className="attendance-table">
+                    <thead>
+                      <tr>
+                        <th>Jugadora</th>
+                        <th>Dorsal</th>
+                        <th>Asistencias</th>
+                        <th>Faltas</th>
+                        <th>% Asistencia</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(asistenciaData.jugadoras || []).map((jugadora) => (
+                        <tr key={jugadora.jugadoraId}>
+                          <td>{jugadora.nombre}</td>
+                          <td>{jugadora.dorsal ?? '-'}</td>
+                          <td>{jugadora.asistencias}</td>
+                          <td>{jugadora.faltas}</td>
+                          <td>{jugadora.porcentajeAsistencia}%</td>
+                        </tr>
+                      ))}
+                      {!asistenciaData.jugadoras?.length && (
+                        <tr>
+                          <td colSpan="5" className="attendance-empty">
+                            Este equipo no tiene jugadoras registradas.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setShowAsistenciaModal(false)}
+              >
+                Cerrar
               </button>
             </div>
           </div>

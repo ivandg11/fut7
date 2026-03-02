@@ -115,6 +115,7 @@
 }
 
 .btn-edit,
+.btn-attendance,
 .btn-delete,
 .btn-delete-confirm {
   border: 0;
@@ -131,6 +132,11 @@
   background: #facc15;
 }
 
+.btn-attendance {
+  flex: 1;
+  background: #38bdf8;
+}
+
 .btn-delete,
 .btn-delete-confirm {
   flex: 1;
@@ -139,6 +145,50 @@
 
 .modal-delete {
   max-width: 500px;
+}
+
+.modal-attendance {
+  max-width: 880px;
+}
+
+.attendance-summary {
+  margin: 0 0 0.8rem;
+  color: var(--text-muted);
+}
+
+.attendance-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+  background: var(--surface);
+}
+
+.attendance-table th,
+.attendance-table td {
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.attendance-table th {
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+.attendance-empty {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 1rem !important;
 }
 
 .delete-warning {

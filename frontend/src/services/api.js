@@ -70,6 +70,7 @@ export const equiposAPI = {
   getByTemporada: (temporadaId) =>
     api.get('/equipos', { params: { temporadaId } }),
   getById: (id) => api.get(`/equipos/${id}`),
+  getAsistencias: (id) => api.get(`/equipos/${id}/asistencias`),
   create: (data) => api.post('/equipos', data),
   update: (id, data) => api.put(`/equipos/${id}`, data),
   remove: (id) => api.delete(`/equipos/${id}`),

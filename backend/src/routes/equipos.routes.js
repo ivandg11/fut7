@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {
   listTeams,
   getTeamById,
+  getTeamAttendanceReport,
   createTeam,
   updateTeam,
   deleteTeam,
@@ -10,6 +11,12 @@ const { authRequired, requireRoles } = require('../middleware/auth');
 
 router.get('/', listTeams);
 router.get('/:id', getTeamById);
+router.get(
+  '/:id/asistencias',
+  authRequired,
+  requireRoles('SUPER_ADMIN', 'admin'),
+  getTeamAttendanceReport,
+);
 router.post(
   '/',
   authRequired,
