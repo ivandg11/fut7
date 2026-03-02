@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useAccess } from '../contexts/AccessContext';
 import { useLiga } from '../contexts/LigaContext';
-import { extractApiErrorMessage, ligasAPI, temporadasAPI } from '../services/api';
+import {
+  extractApiErrorMessage,
+  ligasAPI,
+  temporadasAPI,
+} from '../services/api';
 import './Temporadas.css';
 
 const Temporadas = () => {
@@ -19,7 +23,9 @@ const Temporadas = () => {
   } = useLiga();
 
   const [nombreTemporada, setNombreTemporada] = useState('');
-  const [anioTemporada, setAnioTemporada] = useState(String(new Date().getFullYear()));
+  const [anioTemporada, setAnioTemporada] = useState(
+    String(new Date().getFullYear()),
+  );
   const [ligaNombre, setLigaNombre] = useState('');
   const [ligaTipo, setLigaTipo] = useState('VARONIL');
   const [error, setError] = useState('');
@@ -146,7 +152,10 @@ const Temporadas = () => {
               const expanded = expandedLigaId === liga.id;
               const isCurrent = ligaActual?.id === liga.id;
               return (
-                <article key={liga.id} className={`liga-card ${isCurrent ? 'seleccionada' : ''}`}>
+                <article
+                  key={liga.id}
+                  className={`liga-card ${isCurrent ? 'seleccionada' : ''}`}
+                >
                   <div>
                     <h4>{liga.nombre}</h4>
                     <p>{liga.tipo}</p>
@@ -187,7 +196,9 @@ const Temporadas = () => {
                             <article
                               key={temp.id}
                               className={`temporada-card ${
-                                temporadaActual?.id === temp.id ? 'seleccionada' : ''
+                                temporadaActual?.id === temp.id
+                                  ? 'seleccionada'
+                                  : ''
                               }`}
                             >
                               <div>
@@ -195,7 +206,9 @@ const Temporadas = () => {
                                 <p>{temp.anio}</p>
                               </div>
                               <div className="temporada-actions">
-                                <span className={`estado ${temp.activa ? 'activa' : 'inactiva'}`}>
+                                <span
+                                  className={`estado ${temp.activa ? 'activa' : 'inactiva'}`}
+                                >
                                   {temp.activa ? 'Activa' : 'Inactiva'}
                                 </span>
                                 <button
@@ -210,7 +223,9 @@ const Temporadas = () => {
                                     type="button"
                                     className="btn-delete-temporada"
                                     disabled={busyId === `temp-${temp.id}`}
-                                    onClick={() => eliminarTemporada(temp.id, temp.nombre)}
+                                    onClick={() =>
+                                      eliminarTemporada(temp.id, temp.nombre)
+                                    }
                                   >
                                     Eliminar
                                   </button>
@@ -224,24 +239,31 @@ const Temporadas = () => {
                       {isAdmin && isCurrent && (
                         <div className="modal-content temporada-form-wrap">
                           <h3>Nueva Temporada</h3>
-                          <form onSubmit={crearTemporada} className="temporada-form">
+                          <form
+                            onSubmit={crearTemporada}
+                            className="temporada-form"
+                          >
                             <div className="form-group">
                               <label>Nombre</label>
                               <input
                                 value={nombreTemporada}
-                                onChange={(e) => setNombreTemporada(e.target.value)}
+                                onChange={(e) =>
+                                  setNombreTemporada(e.target.value)
+                                }
                                 placeholder="Ej: Clausura"
                                 required
                               />
                             </div>
                             <div className="form-group">
-                              <label>Anio</label>
+                              <label>Año</label>
                               <input
                                 type="number"
                                 min="2000"
                                 max="2100"
                                 value={anioTemporada}
-                                onChange={(e) => setAnioTemporada(e.target.value)}
+                                onChange={(e) =>
+                                  setAnioTemporada(e.target.value)
+                                }
                                 required
                               />
                             </div>
@@ -274,7 +296,10 @@ const Temporadas = () => {
               </div>
               <div className="form-group">
                 <label>Tipo</label>
-                <select value={ligaTipo} onChange={(e) => setLigaTipo(e.target.value)}>
+                <select
+                  value={ligaTipo}
+                  onChange={(e) => setLigaTipo(e.target.value)}
+                >
                   <option value="VARONIL">Varonil</option>
                   <option value="FEMENIL">Femenil</option>
                   <option value="INFANTIL">Infantil</option>
