@@ -72,6 +72,12 @@
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
 }
 
+.partidos-container .form-group input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: invert(83%) sepia(86%) saturate(1168%) hue-rotate(350deg) brightness(103%) contrast(102%);
+  opacity: 1;
+  cursor: pointer;
+}
+
 .partidos-grid {
   display: grid;
   gap: 2rem;
