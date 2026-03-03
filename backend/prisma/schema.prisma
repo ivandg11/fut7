@@ -19,6 +19,7 @@ enum LeagueType {
   
   FEMENIL
   INFANTIL
+  MIXTA
 }
 
 enum MatchStatus {

@@ -437,6 +437,7 @@ const Temporadas = () => {
                   <option value="VARONIL">Varonil</option>
                   <option value="FEMENIL">Femenil</option>
                   <option value="INFANTIL">Infantil</option>
+                  <option value="MIXTA">Mixta</option>
                 </select>
               </div>
               <button type="submit" className="btn-primary">
