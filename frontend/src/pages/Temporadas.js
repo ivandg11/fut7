@@ -11,6 +11,7 @@ import './Temporadas.css';
 const Temporadas = () => {
   const { isAdmin, role } = useAccess();
   const canCreateLeague = role === 'SUPER_ADMIN';
+  const canEditLeagueName = role === 'SUPER_ADMIN';
   const {
     ligas,
     ligaActual,
@@ -32,6 +33,10 @@ const Temporadas = () => {
   const [ok, setOk] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [expandedLigaId, setExpandedLigaId] = useState(null);
+  const [editingLigaId, setEditingLigaId] = useState(null);
+  const [editingLigaNombre, setEditingLigaNombre] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const temporadasOrdenadas = useMemo(
     () =>
@@ -68,12 +73,7 @@ const Temporadas = () => {
     }
   };
 
-  const eliminarLiga = async (ligaId, nombre) => {
-    const confirmada = window.confirm(
-      `Se eliminara la liga "${nombre}" y sus temporadas relacionadas. Continuar?`,
-    );
-    if (!confirmada) return;
-
+  const eliminarLiga = async (ligaId) => {
     setError('');
     setOk('');
     setBusyId(`liga-${ligaId}`);
@@ -81,6 +81,10 @@ const Temporadas = () => {
       await ligasAPI.remove(ligaId);
       await cargarLigas();
       if (expandedLigaId === ligaId) setExpandedLigaId(null);
+      if (editingLigaId === ligaId) {
+        setEditingLigaId(null);
+        setEditingLigaNombre('');
+      }
       setOk('Liga eliminada.');
     } catch (err) {
       setError(extractApiErrorMessage(err));
@@ -112,9 +116,8 @@ const Temporadas = () => {
     }
   };
 
-  const eliminarTemporada = async (id, nombre) => {
-    const confirmada = window.confirm(`Eliminar temporada "${nombre}"?`);
-    if (!confirmada || !ligaActual?.id) return;
+  const eliminarTemporada = async (id) => {
+    if (!ligaActual?.id) return;
 
     setError('');
     setOk('');
@@ -127,6 +130,74 @@ const Temporadas = () => {
       setError(extractApiErrorMessage(err));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const abrirEdicionLiga = (liga) => {
+    setEditingLigaId(liga.id);
+    setEditingLigaNombre(liga.nombre);
+    setError('');
+    setOk('');
+  };
+
+  const cancelarEdicionLiga = () => {
+    setEditingLigaId(null);
+    setEditingLigaNombre('');
+  };
+
+  const guardarEdicionLiga = async (ligaId) => {
+    const nombre = editingLigaNombre.trim();
+    if (!nombre) {
+      setError('El nombre de la liga es obligatorio.');
+      return;
+    }
+
+    setError('');
+    setOk('');
+    setBusyId(`liga-edit-${ligaId}`);
+    try {
+      await ligasAPI.update(ligaId, { nombre });
+      await cargarLigas();
+      setOk('Nombre de liga actualizado.');
+      cancelarEdicionLiga();
+    } catch (err) {
+      setError(extractApiErrorMessage(err));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const pedirConfirmacionEliminarLiga = (ligaId, nombre) => {
+    setConfirmDialog({
+      title: 'Eliminar liga',
+      message: `Se eliminara la liga "${nombre}" y sus temporadas relacionadas. Esta accion no se puede deshacer.`,
+      confirmText: 'Si, eliminar liga',
+      onConfirm: () => eliminarLiga(ligaId),
+    });
+  };
+
+  const pedirConfirmacionEliminarTemporada = (id, nombre) => {
+    setConfirmDialog({
+      title: 'Eliminar temporada',
+      message: `Eliminar temporada "${nombre}"? Esta accion no se puede deshacer.`,
+      confirmText: 'Si, eliminar temporada',
+      onConfirm: () => eliminarTemporada(id),
+    });
+  };
+
+  const cerrarConfirmDialog = () => {
+    if (confirmLoading) return;
+    setConfirmDialog(null);
+  };
+
+  const confirmarDialogo = async () => {
+    if (!confirmDialog?.onConfirm) return;
+    setConfirmLoading(true);
+    try {
+      await confirmDialog.onConfirm();
+      setConfirmDialog(null);
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -151,13 +222,35 @@ const Temporadas = () => {
             {ligas.map((liga) => {
               const expanded = expandedLigaId === liga.id;
               const isCurrent = ligaActual?.id === liga.id;
+              const isEditingLiga = editingLigaId === liga.id;
               return (
                 <article
                   key={liga.id}
                   className={`liga-card ${isCurrent ? 'seleccionada' : ''}`}
                 >
-                  <div>
-                    <h4>{liga.nombre}</h4>
+                  <div className="liga-info">
+                    {isEditingLiga && canEditLeagueName ? (
+                      <div className="liga-edit-inline">
+                        <input
+                          value={editingLigaNombre}
+                          onChange={(e) => setEditingLigaNombre(e.target.value)}
+                          maxLength={80}
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              guardarEdicionLiga(liga.id);
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelarEdicionLiga();
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <h4>{liga.nombre}</h4>
+                    )}
                     <p>{liga.tipo}</p>
                   </div>
                   <div className="liga-actions">
@@ -165,15 +258,53 @@ const Temporadas = () => {
                       type="button"
                       className="btn-secondary"
                       onClick={() => verTemporadas(liga.id)}
+                      disabled={
+                        busyId === `liga-${liga.id}` ||
+                        busyId === `liga-edit-${liga.id}`
+                      }
                     >
                       Ver temporadas
                     </button>
+                    {canEditLeagueName && !isEditingLiga && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        disabled={busyId === `liga-${liga.id}`}
+                        onClick={() => abrirEdicionLiga(liga)}
+                      >
+                        Editar nombre
+                      </button>
+                    )}
+                    {canEditLeagueName && isEditingLiga && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          disabled={busyId === `liga-edit-${liga.id}`}
+                          onClick={() => guardarEdicionLiga(liga.id)}
+                        >
+                          {busyId === `liga-edit-${liga.id}`
+                            ? 'Guardando...'
+                            : 'Guardar'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          disabled={busyId === `liga-edit-${liga.id}`}
+                          onClick={cancelarEdicionLiga}
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    )}
                     {isAdmin && (
                       <button
                         type="button"
                         className="btn-delete-temporada"
                         disabled={busyId === `liga-${liga.id}`}
-                        onClick={() => eliminarLiga(liga.id, liga.nombre)}
+                        onClick={() =>
+                          pedirConfirmacionEliminarLiga(liga.id, liga.nombre)
+                        }
                       >
                         Borrar liga
                       </button>
@@ -224,7 +355,10 @@ const Temporadas = () => {
                                     className="btn-delete-temporada"
                                     disabled={busyId === `temp-${temp.id}`}
                                     onClick={() =>
-                                      eliminarTemporada(temp.id, temp.nombre)
+                                      pedirConfirmacionEliminarTemporada(
+                                        temp.id,
+                                        temp.nombre,
+                                      )
                                     }
                                   >
                                     Eliminar
@@ -312,6 +446,36 @@ const Temporadas = () => {
           </div>
         )}
       </section>
+
+      {confirmDialog && (
+        <div className="modal-overlay" onClick={cerrarConfirmDialog}>
+          <div
+            className="modal-content temporada-confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>{confirmDialog.title}</h3>
+            <p className="temporada-confirm-message">{confirmDialog.message}</p>
+            <div className="temporada-confirm-actions">
+              <button
+                type="button"
+                className="btn-danger"
+                disabled={confirmLoading}
+                onClick={confirmarDialogo}
+              >
+                {confirmLoading ? 'Procesando...' : confirmDialog.confirmText}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={confirmLoading}
+                onClick={cerrarConfirmDialog}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

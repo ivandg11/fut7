@@ -47,6 +47,26 @@
   color: var(--text-muted);
 }
 
+.liga-info {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.liga-edit-inline input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.68rem;
+  font-size: 0.95rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.liga-edit-inline input:focus {
+  outline: 2px solid rgba(34, 197, 94, 0.3);
+  border-color: #22c55e;
+}
+
 .liga-card.seleccionada,
 .temporada-card.seleccionada {
   outline: 2px solid rgba(34, 197, 94, 0.35);
@@ -137,8 +157,36 @@
   color: var(--text);
 }
 
+.temporada-confirm-modal {
+  max-width: 520px;
+}
+
+.temporada-confirm-message {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.temporada-confirm-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 @media (max-width: 980px) {
   .temporadas-container {
     padding: 0 0.78rem 0.9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .temporada-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .temporada-confirm-actions .btn-danger,
+  .temporada-confirm-actions .btn-secondary {
+    width: 100%;
   }
 }
