@@ -6,6 +6,7 @@ const {
   createTeam,
   updateTeam,
   deleteTeam,
+  adjustTeamPoints,
 } = require('../controllers/equipos.controller');
 const { authRequired, requireRoles } = require('../middleware/auth');
 
@@ -28,6 +29,12 @@ router.put(
   authRequired,
   requireRoles('SUPER_ADMIN', 'admin'),
   updateTeam,
+);
+router.post(
+  '/:id/ajuste-puntos',
+  authRequired,
+  requireRoles('SUPER_ADMIN', 'admin'),
+  adjustTeamPoints,
 );
 router.delete(
   '/:id',

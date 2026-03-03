@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useAccess } from '../contexts/AccessContext';
 import { useLiga } from '../contexts/LigaContext';
-import { estadisticasAPI, extractApiErrorMessage } from '../services/api';
+import { equiposAPI, estadisticasAPI, extractApiErrorMessage } from '../services/api';
 import LigaSelector from '../components/LigaSelector';
 import './TablaPosiciones.css';
 
 const TablaPosiciones = () => {
+  const { isAdmin } = useAccess();
   const { ligaActual, temporadaActual } = useLiga();
   const [tabla, setTabla] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [adjustingTeamId, setAdjustingTeamId] = useState(null);
 
   const mejorDefensa = tabla.length
     ? tabla.reduce((best, team) => (team.gc < best.gc ? team : best), tabla[0])
@@ -17,25 +20,41 @@ const TablaPosiciones = () => {
     ? tabla.reduce((best, team) => (team.gf > best.gf ? team : best), tabla[0])
     : null;
 
+  const cargarTabla = async () => {
+    if (!temporadaActual?.id) {
+      setTabla([]);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const response = await estadisticasAPI.tabla(temporadaActual.id);
+      setTabla(response.data);
+    } catch (err) {
+      setError(
+        `No fue posible cargar la tabla: ${extractApiErrorMessage(err)}`,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ajustarPuntos = async (equipoId, delta) => {
+    setError('');
+    try {
+      setAdjustingTeamId(equipoId);
+      await equiposAPI.ajustarPuntos(equipoId, delta);
+      await cargarTabla();
+    } catch (err) {
+      setError(
+        `No fue posible ajustar puntos: ${extractApiErrorMessage(err)}`,
+      );
+    } finally {
+      setAdjustingTeamId(null);
+    }
+  };
+
   useEffect(() => {
-    const cargarTabla = async () => {
-      if (!temporadaActual?.id) {
-        setTabla([]);
-        return;
-      }
-      setLoading(true);
-      setError('');
-      try {
-        const response = await estadisticasAPI.tabla(temporadaActual.id);
-        setTabla(response.data);
-      } catch (err) {
-        setError(
-          `No fue posible cargar la tabla: ${extractApiErrorMessage(err)}`,
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
     cargarTabla();
   }, [temporadaActual?.id]);
 
@@ -116,7 +135,36 @@ const TablaPosiciones = () => {
                     {row.dg > 0 ? `+${row.dg}` : row.dg}
                   </td>
                   <td className="puntos">
-                    <span className="points-pill">{row.pts}</span>
+                    <div className="points-actions-wrap">
+                      <span className="points-pill">{row.pts}</span>
+                      {isAdmin && (
+                        <span className="points-mini-actions">
+                          <button
+                            type="button"
+                            className="pts-mini-btn minus"
+                            onClick={() => ajustarPuntos(row.equipoId, -1)}
+                            disabled={adjustingTeamId === row.equipoId}
+                            title="Restar 1 punto por penalizacion"
+                          >
+                            -
+                          </button>
+                          <button
+                            type="button"
+                            className="pts-mini-btn plus"
+                            onClick={() => ajustarPuntos(row.equipoId, 1)}
+                            disabled={adjustingTeamId === row.equipoId}
+                            title="Sumar 1 punto de ajuste"
+                          >
+                            +
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                    {isAdmin && !!row.ajustePts && (
+                      <div className="points-adjust-note">
+                        Ajuste: {row.ajustePts > 0 ? `+${row.ajustePts}` : row.ajustePts}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

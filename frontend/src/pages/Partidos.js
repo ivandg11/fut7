@@ -12,6 +12,14 @@ import './Partidos.css';
 
 const CANCHAS_DISPONIBLES = ['Cancha 1', 'Cancha 2', 'Cancha 3', 'Cancha 4'];
 
+const escapeHtml = (value = '') =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 const Partidos = () => {
   const { role, canScoreMatches } = useAccess();
   const { temporadaActual, ligaActual } = useLiga();
@@ -263,6 +271,177 @@ const Partidos = () => {
     return { local, visita };
   };
 
+  const descargarCedulaPdf = (partido) => {
+    const fechaMatch = new Date(partido.fecha);
+    const dia = fechaMatch.toLocaleDateString('es-MX', { weekday: 'long' });
+    const fecha = fechaMatch.toLocaleDateString('es-MX');
+    const hora = fechaMatch.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const asistenciaMap = new Map(
+      (partido.asistencias || []).map((item) => [item.jugadoraId, Boolean(item.presente)]),
+    );
+    const golesPorJugadora = new Map();
+    (partido.goles || []).forEach((gol) => {
+      const jugadoraId = Number(gol.jugadoraId);
+      golesPorJugadora.set(
+        jugadoraId,
+        (golesPorJugadora.get(jugadoraId) || 0) + 1,
+      );
+    });
+
+    const jugadorasLocal = jugadoras.filter((j) => j.equipoId === partido.equipoLocalId);
+    const jugadorasVisita = jugadoras.filter((j) => j.equipoId === partido.equipoVisitaId);
+
+    const buildRows = (listaJugadoras) => {
+      const rows = listaJugadoras.map((jugadora) => `
+        <tr>
+          <td class="col-no">${escapeHtml(jugadora.dorsal ?? '')}</td>
+          <td class="col-name">${escapeHtml(jugadora.nombre)}</td>
+          <td class="col-mini">${golesPorJugadora.get(jugadora.id) || ''}</td>
+          <td class="col-mini">${asistenciaMap.get(jugadora.id) ? 'P' : ''}</td>
+          <td class="col-mini"></td>
+        </tr>
+      `);
+
+      while (rows.length < 14) {
+        rows.push(`
+          <tr>
+            <td class="col-no">&nbsp;</td>
+            <td class="col-name">&nbsp;</td>
+            <td class="col-mini"></td>
+            <td class="col-mini"></td>
+            <td class="col-mini"></td>
+          </tr>
+        `);
+      }
+      return rows.join('');
+    };
+
+    const html = `
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Cedula Arbitral - ${escapeHtml(partido.equipoLocal.nombre)} vs ${escapeHtml(partido.equipoVisita.nombre)}</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; color: #111; }
+    .sheet { width: 100%; }
+    .head { display: grid; grid-template-columns: 170px 1fr; gap: 14px; align-items: start; margin-bottom: 8px; }
+    .logo { border: 2px solid #111; border-radius: 10px; height: 120px; display: grid; place-items: center; font-weight: 800; font-size: 28px; }
+    .meta { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .meta-box { border: 2px solid #111; min-height: 52px; }
+    .meta-label { border-bottom: 2px solid #111; font-weight: 800; text-align: center; padding: 2px 4px; }
+    .meta-value { text-align: center; padding: 6px 4px; text-transform: capitalize; }
+    .title { text-align: center; font-size: 36px; font-weight: 900; margin: 8px 0 6px; letter-spacing: 0.6px; }
+    .subtitle { text-align: center; font-size: 17px; font-weight: 700; margin: 0 0 12px; }
+    .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .team-box { border: 2px solid #111; }
+    .team-head { display: grid; grid-template-columns: 1fr auto; border-bottom: 2px solid #111; }
+    .team-title { padding: 6px 8px; font-weight: 800; }
+    .team-score { padding: 6px 12px; border-left: 2px solid #111; font-weight: 900; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1.7px solid #111; padding: 3px 5px; height: 24px; }
+    th { font-size: 14px; }
+    .col-no { width: 58px; text-align: center; }
+    .col-name { text-align: left; }
+    .col-mini { width: 46px; text-align: center; }
+    .legend { margin-top: 8px; font-size: 12px; }
+    .foot { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .sign { border-top: 2px solid #111; padding-top: 6px; text-align: center; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="head">
+      <div class="logo">SOCCER<br/>GDL</div>
+      <div class="meta">
+        <div class="meta-box"><div class="meta-label">DIA</div><div class="meta-value">${escapeHtml(dia)}</div></div>
+        <div class="meta-box"><div class="meta-label">FECHA</div><div class="meta-value">${escapeHtml(fecha)}</div></div>
+        <div class="meta-box"><div class="meta-label">JORNADA</div><div class="meta-value">${escapeHtml(partido.jornada)}</div></div>
+        <div class="meta-box"><div class="meta-label">CANCHA</div><div class="meta-value">${escapeHtml(partido.cancha || '-')}</div></div>
+        <div class="meta-box"><div class="meta-label">HORA</div><div class="meta-value">${escapeHtml(hora)}</div></div>
+      </div>
+    </div>
+
+    <div class="title">CEDULA ARBITRAL</div>
+    <div class="subtitle">
+      MARCADOR FINAL: ${escapeHtml(partido.equipoLocal.nombre)} ${partido.golesLocal} - ${partido.golesVisita} ${escapeHtml(partido.equipoVisita.nombre)}
+    </div>
+
+    <div class="teams">
+      <div class="team-box">
+        <div class="team-head">
+          <div class="team-title">${escapeHtml(partido.equipoLocal.nombre)}</div>
+          <div class="team-score">${partido.golesLocal}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="col-no">NO.</th>
+              <th class="col-name">NOMBRE/APELLIDO</th>
+              <th class="col-mini">GOL</th>
+              <th class="col-mini">T/A</th>
+              <th class="col-mini">T/R</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${buildRows(jugadorasLocal)}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="team-box">
+        <div class="team-head">
+          <div class="team-title">${escapeHtml(partido.equipoVisita.nombre)}</div>
+          <div class="team-score">${partido.golesVisita}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th class="col-no">NO.</th>
+              <th class="col-name">NOMBRE/APELLIDO</th>
+              <th class="col-mini">GOL</th>
+              <th class="col-mini">T/A</th>
+              <th class="col-mini">T/R</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${buildRows(jugadorasVisita)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="legend">T/A = Presente en asistencia. T/R = Tarjeta roja (captura manual si aplica).</div>
+
+    <div class="foot">
+      <div class="sign">Firma Arbitro</div>
+      <div class="sign">Firma Anotador</div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const popup = window.open('', '_blank', 'width=1200,height=900');
+    if (!popup) {
+      setError('Tu navegador bloqueo la ventana para imprimir PDF. Habilita popups.');
+      return;
+    }
+
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+    popup.focus();
+    setTimeout(() => {
+      popup.print();
+    }, 300);
+  };
+
   return (
     <div className="partidos-container">
       <LigaSelector />
@@ -462,6 +641,15 @@ const Partidos = () => {
                           onClick={() => setPartidoAEliminar(partido)}
                         >
                           Eliminar Partido
+                        </button>
+                      )}
+                      {canManageMatches && partido.status === 'JUGADO' && (
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => descargarCedulaPdf(partido)}
+                        >
+                          Descargar Cedula PDF
                         </button>
                       )}
                     </>

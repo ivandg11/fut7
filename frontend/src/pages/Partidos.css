@@ -246,9 +246,11 @@
   padding: 2rem;
 }
 .partido-admin > .btn-primary,
-.partido-admin > .btn-danger {
+.partido-admin > .btn-danger,
+.partido-admin > .btn-secondary {
   min-width: 180px;
   margin-right: 0.65rem;
+  margin-bottom: 0.6rem;
 }
 
 .resultado-editor h4 {

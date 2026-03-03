@@ -22,6 +22,7 @@ const getStandings = async (req, res) => {
       table.set(team.id, {
         equipoId: team.id,
         equipo: team.nombre,
+        ajustePts: team.ajustePts || 0,
         pj: 0,
         pg: 0,
         pe: 0,
@@ -62,7 +63,12 @@ const getStandings = async (req, res) => {
     }
 
     const standings = Array.from(table.values())
-      .map((item) => ({ ...item, dg: item.gf - item.gc }))
+      .map((item) => ({
+        ...item,
+        ptsBase: item.pts,
+        pts: item.pts + (item.ajustePts || 0),
+        dg: item.gf - item.gc,
+      }))
       .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.equipo.localeCompare(b.equipo))
       .map((item, index) => ({ ...item, posicion: index + 1 }));
 

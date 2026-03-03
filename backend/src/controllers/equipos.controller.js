@@ -119,6 +119,37 @@ const deleteTeam = async (req, res) => {
   }
 };
 
+const adjustTeamPoints = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const delta = Number(req.body?.delta);
+    if (!id) return res.status(400).json({ message: 'id de equipo invalido' });
+    if (!Number.isInteger(delta) || delta === 0) {
+      return res.status(400).json({ message: 'delta debe ser un entero distinto de 0' });
+    }
+
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: { temporada: true },
+    });
+    if (!team) return res.status(404).json({ message: 'Equipo no encontrado' });
+
+    if (!canManageLeague(req.user, team.temporada.ligaId)) {
+      return res.status(403).json({ message: 'No puedes ajustar puntos de este equipo' });
+    }
+
+    const updated = await prisma.team.update({
+      where: { id },
+      data: { ajustePts: (team.ajustePts || 0) + delta },
+      select: { id: true, nombre: true, ajustePts: true, temporadaId: true },
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al ajustar puntos', error: error.message });
+  }
+};
+
 const getTeamAttendanceReport = async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -202,6 +233,7 @@ module.exports = {
   createTeam,
   updateTeam,
   deleteTeam,
+  adjustTeamPoints,
   getTeamAttendanceReport,
 };
 

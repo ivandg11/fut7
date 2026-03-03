@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Team`
+ADD COLUMN `ajustePts` INTEGER NOT NULL DEFAULT 0;
