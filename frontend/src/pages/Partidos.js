@@ -152,10 +152,18 @@ const Partidos = () => {
     );
     const asistenciaInicial = {};
     jugadorasPartido.forEach((j) => {
-      asistenciaInicial[j.id] = false;
+      asistenciaInicial[j.id] = {
+        presente: false,
+        tarjetaAmarilla: false,
+        tarjetaRoja: false,
+      };
     });
     (partido.asistencias || []).forEach((a) => {
-      asistenciaInicial[a.jugadoraId] = Boolean(a.presente);
+      asistenciaInicial[a.jugadoraId] = {
+        presente: Boolean(a.presente),
+        tarjetaAmarilla: Boolean(a.tarjetaAmarilla),
+        tarjetaRoja: Boolean(a.tarjetaRoja),
+      };
     });
 
     setEditorPartidoId(partido.id);
@@ -200,7 +208,7 @@ const Partidos = () => {
     const teamId =
       equipoGol === 'local' ? partido.equipoLocalId : partido.equipoVisitaId;
     return jugadoras.filter(
-      (j) => j.equipoId === teamId && asistenciaEditor[j.id],
+      (j) => j.equipoId === teamId && asistenciaEditor[j.id]?.presente,
     );
   };
 
@@ -212,7 +220,28 @@ const Partidos = () => {
   const toggleAsistencia = (jugadoraId) => {
     setAsistenciaEditor((prev) => ({
       ...prev,
-      [jugadoraId]: !prev[jugadoraId],
+      [jugadoraId]: {
+        presente: !prev[jugadoraId]?.presente,
+        tarjetaAmarilla: Boolean(prev[jugadoraId]?.tarjetaAmarilla),
+        tarjetaRoja: Boolean(prev[jugadoraId]?.tarjetaRoja),
+      },
+    }));
+  };
+
+  const toggleTarjeta = (jugadoraId, tipo) => {
+    setAsistenciaEditor((prev) => ({
+      ...prev,
+      [jugadoraId]: {
+        presente: Boolean(prev[jugadoraId]?.presente),
+        tarjetaAmarilla:
+          tipo === 'amarilla'
+            ? !prev[jugadoraId]?.tarjetaAmarilla
+            : Boolean(prev[jugadoraId]?.tarjetaAmarilla),
+        tarjetaRoja:
+          tipo === 'roja'
+            ? !prev[jugadoraId]?.tarjetaRoja
+            : Boolean(prev[jugadoraId]?.tarjetaRoja),
+      },
     }));
   };
 
@@ -240,9 +269,11 @@ const Partidos = () => {
     try {
       const response = await partidosAPI.registrarResultado(partidoId, {
         goles: golesEditor,
-        asistencias: Object.entries(asistenciaEditor).map(([jugadoraId, presente]) => ({
+        asistencias: Object.entries(asistenciaEditor).map(([jugadoraId, estado]) => ({
           jugadoraId: Number(jugadoraId),
-          presente: Boolean(presente),
+          presente: Boolean(estado?.presente),
+          tarjetaAmarilla: Boolean(estado?.tarjetaAmarilla),
+          tarjetaRoja: Boolean(estado?.tarjetaRoja),
         })),
       });
       setPartidos((prev) =>
@@ -281,7 +312,14 @@ const Partidos = () => {
     });
 
     const asistenciaMap = new Map(
-      (partido.asistencias || []).map((item) => [item.jugadoraId, Boolean(item.presente)]),
+      (partido.asistencias || []).map((item) => [
+        item.jugadoraId,
+        {
+          presente: Boolean(item.presente),
+          tarjetaAmarilla: Boolean(item.tarjetaAmarilla),
+          tarjetaRoja: Boolean(item.tarjetaRoja),
+        },
+      ]),
     );
     const golesPorJugadora = new Map();
     (partido.goles || []).forEach((gol) => {
@@ -301,8 +339,8 @@ const Partidos = () => {
           <td class="col-no">${escapeHtml(jugadora.dorsal ?? '')}</td>
           <td class="col-name">${escapeHtml(jugadora.nombre)}</td>
           <td class="col-mini">${golesPorJugadora.get(jugadora.id) || ''}</td>
-          <td class="col-mini">${asistenciaMap.get(jugadora.id) ? 'P' : ''}</td>
-          <td class="col-mini"></td>
+          <td class="col-mini">${asistenciaMap.get(jugadora.id)?.tarjetaAmarilla ? 'X' : ''}</td>
+          <td class="col-mini">${asistenciaMap.get(jugadora.id)?.tarjetaRoja ? 'X' : ''}</td>
         </tr>
       `);
 
@@ -417,7 +455,7 @@ const Partidos = () => {
       </div>
     </div>
 
-    <div class="legend">T/A = Presente en asistencia. T/R = Tarjeta roja (captura manual si aplica).</div>
+    <div class="legend">T/A = Tarjeta amarilla. T/R = Tarjeta roja.</div>
 
     <div class="foot">
       <div class="sign">Firma Arbitro</div>
@@ -673,10 +711,15 @@ const Partidos = () => {
                                   {partido.equipoLocal.nombre} (
                                   {
                                     listas.local.filter(
-                                      (j) => asistenciaEditor[j.id],
+                                      (j) => asistenciaEditor[j.id]?.presente,
                                     ).length
                                   }
                                   /{listas.local.length})
+                                </div>
+                                <div className="asistencia-columns">
+                                  <span>Asistencia</span>
+                                  <span title="Tarjeta amarilla">🟨</span>
+                                  <span title="Tarjeta roja">🟥</span>
                                 </div>
                                 <ul className="asistencia-list">
                                   {listas.local.map((jugadora) => (
@@ -688,7 +731,7 @@ const Partidos = () => {
                                         <input
                                           type="checkbox"
                                           checked={
-                                            !!asistenciaEditor[jugadora.id]
+                                            !!asistenciaEditor[jugadora.id]?.presente
                                           }
                                           onChange={() =>
                                             toggleAsistencia(jugadora.id)
@@ -702,6 +745,24 @@ const Partidos = () => {
                                             : ''}
                                         </span>
                                       </label>
+                                      <div className="asistencia-cards">
+                                        <label className="card-toggle yellow" title="Tarjeta amarilla">
+                                          <input
+                                            type="checkbox"
+                                            checked={!!asistenciaEditor[jugadora.id]?.tarjetaAmarilla}
+                                            onChange={() => toggleTarjeta(jugadora.id, 'amarilla')}
+                                          />
+                                          <span>🟨</span>
+                                        </label>
+                                        <label className="card-toggle red" title="Tarjeta roja">
+                                          <input
+                                            type="checkbox"
+                                            checked={!!asistenciaEditor[jugadora.id]?.tarjetaRoja}
+                                            onChange={() => toggleTarjeta(jugadora.id, 'roja')}
+                                          />
+                                          <span>🟥</span>
+                                        </label>
+                                      </div>
                                     </li>
                                   ))}
                                   {!listas.local.length && (
@@ -717,10 +778,15 @@ const Partidos = () => {
                                   {partido.equipoVisita.nombre} (
                                   {
                                     listas.visita.filter(
-                                      (j) => asistenciaEditor[j.id],
+                                      (j) => asistenciaEditor[j.id]?.presente,
                                     ).length
                                   }
                                   /{listas.visita.length})
+                                </div>
+                                <div className="asistencia-columns">
+                                  <span>Asistencia</span>
+                                  <span title="Tarjeta amarilla">🟨</span>
+                                  <span title="Tarjeta roja">🟥</span>
                                 </div>
                                 <ul className="asistencia-list">
                                   {listas.visita.map((jugadora) => (
@@ -732,7 +798,7 @@ const Partidos = () => {
                                         <input
                                           type="checkbox"
                                           checked={
-                                            !!asistenciaEditor[jugadora.id]
+                                            !!asistenciaEditor[jugadora.id]?.presente
                                           }
                                           onChange={() =>
                                             toggleAsistencia(jugadora.id)
@@ -746,6 +812,24 @@ const Partidos = () => {
                                             : ''}
                                         </span>
                                       </label>
+                                      <div className="asistencia-cards">
+                                        <label className="card-toggle yellow" title="Tarjeta amarilla">
+                                          <input
+                                            type="checkbox"
+                                            checked={!!asistenciaEditor[jugadora.id]?.tarjetaAmarilla}
+                                            onChange={() => toggleTarjeta(jugadora.id, 'amarilla')}
+                                          />
+                                          <span>🟨</span>
+                                        </label>
+                                        <label className="card-toggle red" title="Tarjeta roja">
+                                          <input
+                                            type="checkbox"
+                                            checked={!!asistenciaEditor[jugadora.id]?.tarjetaRoja}
+                                            onChange={() => toggleTarjeta(jugadora.id, 'roja')}
+                                          />
+                                          <span>🟥</span>
+                                        </label>
+                                      </div>
                                     </li>
                                   ))}
                                   {!listas.visita.length && (

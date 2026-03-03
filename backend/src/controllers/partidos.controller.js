@@ -167,6 +167,8 @@ const registerResult = async (req, res) => {
         jugadoraId: attendance.jugadoraId,
         equipoId: teamId,
         presente: attendance.presente,
+        tarjetaAmarilla: attendance.tarjetaAmarilla,
+        tarjetaRoja: attendance.tarjetaRoja,
       });
     }
 
@@ -264,6 +266,8 @@ const normalizeAttendances = (asistencias) => {
     byPlayer.set(jugadoraId, {
       jugadoraId,
       presente: Boolean(entry?.presente),
+      tarjetaAmarilla: Boolean(entry?.tarjetaAmarilla),
+      tarjetaRoja: Boolean(entry?.tarjetaRoja),
     });
   }
   return Array.from(byPlayer.values());

@@ -153,6 +153,8 @@ model MatchAttendance {
   jugadoraId Int
   equipoId   Int
   presente   Boolean  @default(false)
+  tarjetaAmarilla Boolean @default(false)
+  tarjetaRoja  Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
