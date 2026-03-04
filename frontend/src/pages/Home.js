@@ -6,21 +6,15 @@ const Home = () => {
   const slides = [
     {
       src: `${process.env.PUBLIC_URL}/img/s1.jpg`,
-      alt: 'Academia de futbol Galaxy GDL',
-      title: 'Academia de Futbol Galaxy GDL',
-      description: 'Entrenamientos para ninos, adultos y porteros.',
+      alt: 'Publicidad Soccer GDL 1',
     },
     {
       src: `${process.env.PUBLIC_URL}/img/s2.jpg`,
-      alt: 'Inscripciones abiertas en Soccer GDL',
-      title: 'Inscripciones Abiertas',
-      description: 'Categorias juveniles disponibles para nueva temporada.',
+      alt: 'Publicidad Soccer GDL 2',
     },
     {
       src: `${process.env.PUBLIC_URL}/img/s3.jpg`,
-      alt: 'Promocion de inscripcion en Soccer GDL',
-      title: 'Promociones Activas',
-      description: 'Consulta disponibilidad y promociones vigentes.',
+      alt: 'Publicidad Soccer GDL 3',
     },
   ];
   const [slideIndex, setSlideIndex] = useState(0);
@@ -69,26 +63,15 @@ const Home = () => {
       >
         <div
           className="home-slider-track"
-          style={{ transform: `translateX(-${slideIndex * 100}%)` }}
         >
-          {slides.map((slide) => (
-            <article className="home-slide" key={slide.src}>
-              <img src={slide.src} alt={slide.alt} className="home-slide-image" />
-              <div className="home-slide-overlay" />
-              <div className="home-slide-content">
-                <p className="home-slide-kicker">Soccer GDL</p>
-                <h2>{slide.title}</h2>
-                <p>{slide.description}</p>
-                <div className="home-slide-actions">
-                  <a
-                    href="https://wa.me/523333977729"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary"
-                  >
-                    Solicitar informes
-                  </a>
-                </div>
+          {slides.map((slide, index) => (
+            <article
+              className={`home-slide ${index === slideIndex ? 'active' : ''}`}
+              key={slide.src}
+              aria-hidden={index !== slideIndex}
+            >
+              <div className="home-slide-frame">
+                <img src={slide.src} alt={slide.alt} className="home-slide-image" />
               </div>
             </article>
           ))}
