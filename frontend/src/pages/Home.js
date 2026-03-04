@@ -12,9 +12,7 @@ const Home = () => {
           Somos para ti la mejor opcion para desarrollar tus habilidades
           desportivas , en un ambiente motivacional y de competencia.
         </p>
-        <p>
-          Implementacion inicial: <strong>Liga Pro Soccer Femenil</strong>.
-        </p>
+
         <div className="hero-metrics">
           <article className="hero-metric-card">
             <span className="hero-metric-label">Canchas</span>
@@ -57,7 +55,15 @@ const Home = () => {
               Avenida Periférico Poniente Manuel Gómez Morin 6420, Paraísos del
               Colli, 45060 Zapopan, Jal.
             </li>
-            <li>https://maps.app.goo.gl/b8U7Zz9tDES6otXh9</li>
+            <li>
+              <a
+                href="https://maps.app.goo.gl/b8U7Zz9tDES6otXh9"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver en Google Maps
+              </a>
+            </li>
           </ul>
         </article>
 
