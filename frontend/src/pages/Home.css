@@ -12,9 +12,9 @@
   text-align: center;
   color: var(--text);
   background:
-    radial-gradient(circle at 14% 16%, rgba(56, 189, 248, 0.2), transparent 44%),
-    radial-gradient(circle at 88% 82%, rgba(34, 197, 94, 0.18), transparent 42%),
-    linear-gradient(135deg, #0b1220, #111827 52%, #0f172a);
+    radial-gradient(circle at 14% 16%, rgba(255, 212, 71, 0.28), transparent 44%),
+    radial-gradient(circle at 88% 82%, rgba(255, 255, 255, 0.11), transparent 42%),
+    linear-gradient(135deg, #101215, #1b1f25 52%, #0f1012);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
 }
@@ -32,7 +32,7 @@
   border-radius: 50%;
   right: -90px;
   top: -100px;
-  background: rgba(56, 189, 248, 0.12);
+  background: rgba(255, 212, 71, 0.14);
   filter: blur(6px);
 }
 
@@ -58,9 +58,9 @@
   width: fit-content;
   padding: 0.34rem 0.72rem;
   border-radius: 999px;
-  border: 1px solid rgba(34, 197, 94, 0.44);
-  background: rgba(34, 197, 94, 0.14);
-  color: #d4ffe3;
+  border: 1px solid rgba(255, 212, 71, 0.58);
+  background: rgba(255, 212, 71, 0.16);
+  color: #fff3c0;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.35px;
@@ -154,7 +154,7 @@
   font-size: 1rem;
   font-weight: 800;
   color: #0f172a;
-  background: #22c55e;
+  background: var(--brand);
 }
 
 .feature-card:hover {

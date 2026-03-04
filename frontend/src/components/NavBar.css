@@ -8,8 +8,8 @@
   gap: 1.2rem;
   padding: 0.9rem 1.3rem;
   background:
-    linear-gradient(120deg, rgba(8, 47, 73, 0.55), rgba(17, 24, 39, 0.94)),
-    #111827;
+    linear-gradient(120deg, rgba(255, 212, 71, 0.2), rgba(17, 19, 22, 0.95)),
+    #111316;
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(10px);
@@ -92,8 +92,8 @@
 
 .nav-links a.active {
   color: #ffffff;
-  background: rgba(34, 197, 94, 0.16);
-  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.46);
+  background: rgba(255, 212, 71, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 212, 71, 0.55);
 }
 
 .nav-access {
@@ -129,14 +129,14 @@
 }
 
 .btn-admin {
-  background: linear-gradient(180deg, #facc15, #eab308);
-  border-color: #facc15;
+  background: linear-gradient(180deg, #ffd447, #f0b90b);
+  border-color: #ffd447;
   color: #0f172a;
 }
 
 .btn-admin:hover {
-  background: #fde047;
-  border-color: #fde047;
+  background: #ffe082;
+  border-color: #ffe082;
 }
 
 @media (max-width: 980px) {

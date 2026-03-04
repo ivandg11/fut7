@@ -63,13 +63,13 @@
 }
 
 .liga-edit-inline input:focus {
-  outline: 2px solid rgba(34, 197, 94, 0.3);
-  border-color: #22c55e;
+  outline: 2px solid rgba(255, 212, 71, 0.3);
+  border-color: var(--brand);
 }
 
 .liga-card.seleccionada,
 .temporada-card.seleccionada {
-  outline: 2px solid rgba(34, 197, 94, 0.35);
+  outline: 2px solid rgba(255, 212, 71, 0.38);
 }
 
 .liga-actions,
@@ -101,8 +101,8 @@
 }
 
 .estado.activa {
-  color: #c7f9d8;
-  background: rgba(34, 197, 94, 0.2);
+  color: #fff3c8;
+  background: rgba(255, 212, 71, 0.2);
 }
 
 .estado.inactiva {
@@ -118,7 +118,7 @@
   font-weight: 700;
   color: #0f172a;
   cursor: pointer;
-  background: #facc15;
+  background: var(--brand);
 }
 
 .btn-delete-temporada:disabled {
