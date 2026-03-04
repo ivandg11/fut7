@@ -43,7 +43,7 @@
   left: -80px;
   bottom: -84px;
   transform: rotate(22deg);
-  background: rgba(148, 163, 184, 0.08);
+  background: rgba(255, 212, 71, 0.1);
 }
 
 .hero-section h1 {
@@ -51,6 +51,14 @@
   font-family: 'Sora', sans-serif;
   font-size: clamp(2rem, 5vw, 3.5rem);
   letter-spacing: 0.6px;
+}
+
+.hero-logo {
+  width: clamp(84px, 12vw, 132px);
+  height: auto;
+  margin-bottom: 0.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 24px rgba(247, 224, 48, 0.32));
 }
 
 .hero-kicker {
@@ -83,11 +91,11 @@
 }
 
 .hero-metric-card {
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(255, 212, 71, 0.28);
   border-radius: 14px;
   padding: 0.9rem;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.65), rgba(2, 6, 23, 0.35));
-  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(37, 40, 45, 0.86), rgba(20, 22, 26, 0.66));
+  box-shadow: inset 0 1px 0 rgba(255, 212, 71, 0.18);
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -96,7 +104,7 @@
 
 .hero-metric-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(148, 163, 184, 0.34);
+  border-color: rgba(255, 212, 71, 0.48);
   box-shadow: 0 10px 22px rgba(2, 6, 23, 0.35);
 }
 
@@ -133,7 +141,7 @@
 }
 
 .feature-card {
-  background: linear-gradient(160deg, rgba(17, 24, 39, 0.95), rgba(11, 18, 32, 0.95));
+  background: linear-gradient(160deg, rgba(28, 30, 34, 0.96), rgba(20, 22, 26, 0.96));
   border: 1px solid var(--border);
   border-radius: 17px;
   box-shadow: var(--shadow-md);
@@ -153,7 +161,7 @@
   justify-content: center;
   font-size: 1rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #111215;
   background: var(--brand);
 }
 
@@ -190,7 +198,7 @@
 }
 
 .info-card {
-  background: linear-gradient(160deg, rgba(17, 24, 39, 0.95), rgba(11, 18, 32, 0.92));
+  background: linear-gradient(160deg, rgba(28, 30, 34, 0.96), rgba(20, 22, 26, 0.93));
   border: 1px solid var(--border);
   border-radius: 17px;
   padding: 1.1rem;
@@ -226,7 +234,7 @@
   justify-content: space-between;
   gap: 0.8rem;
   padding: 0.45rem 0;
-  border-bottom: 1px dashed rgba(148, 163, 184, 0.25);
+  border-bottom: 1px dashed rgba(255, 212, 71, 0.26);
 }
 
 .dias-lista li:last-child {

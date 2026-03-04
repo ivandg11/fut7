@@ -2,9 +2,12 @@ import React from 'react';
 import './Home.css';
 
 const Home = () => {
+  const logoSrc = `${process.env.PUBLIC_URL}/logo.png`;
+
   return (
     <div className="home-container">
       <div className="hero-section">
+        <img src={logoSrc} alt="Soccer GDL" className="hero-logo" />
         <h1>SoccerGDL</h1>
         <p>
           Opera ligas de futbol 7 con datos en tiempo real, control deportivo y

@@ -30,7 +30,7 @@
 .tabla-insight-card {
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: linear-gradient(165deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9));
+  background: linear-gradient(165deg, rgba(33, 36, 41, 0.95), rgba(23, 25, 29, 0.9));
   padding: 0.82rem 0.9rem;
   display: grid;
   gap: 0.2rem;
@@ -93,7 +93,7 @@
 .filtro-btn {
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: #111827;
+  background: #1a1d22;
   color: var(--text);
   padding: 0.47rem 0.86rem;
   font-size: 0.83rem;
@@ -111,7 +111,7 @@
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.94), rgba(11, 18, 32, 0.94));
+  background: linear-gradient(180deg, rgba(29, 31, 36, 0.95), rgba(19, 21, 25, 0.95));
   box-shadow: var(--shadow-md);
 }
 
@@ -122,7 +122,7 @@
 }
 
 .tabla-posiciones thead {
-  background: linear-gradient(180deg, #0b1220, #101827);
+  background: linear-gradient(180deg, #262a31, #171a20);
   color: #ffffff;
 }
 
@@ -148,7 +148,7 @@
 }
 
 .tabla-posiciones tbody tr:hover {
-  background: rgba(148, 163, 184, 0.11);
+  background: rgba(255, 212, 71, 0.1);
 }
 
 .tabla-posiciones tbody tr.liguilla-zone {
@@ -159,7 +159,7 @@
 .tabla-posiciones tbody tr.is-first {
   background:
     linear-gradient(90deg, rgba(255, 212, 71, 0.18), rgba(255, 212, 71, 0.03)),
-    rgba(15, 23, 42, 0.82);
+    rgba(24, 26, 31, 0.84);
 }
 
 .tabla-posiciones tbody tr.is-best-defense {
@@ -183,8 +183,8 @@
   border-radius: 999px;
   padding: 0.16rem 0.48rem;
   font-size: 0.8rem;
-  background: rgba(148, 163, 184, 0.16);
-  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(255, 212, 71, 0.12);
+  border: 1px solid rgba(255, 212, 71, 0.26);
 }
 
 .tabla-posiciones .equipo-nombre {
@@ -250,8 +250,8 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.38);
-  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 212, 71, 0.38);
+  background: rgba(29, 31, 36, 0.88);
   color: #f8fafc;
   font-weight: 800;
   line-height: 1;
@@ -313,7 +313,7 @@
   gap: 0.65rem;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #111827;
+  background: #1a1d22;
   padding: 0.7rem;
 }
 

@@ -7,6 +7,7 @@ const NavBar = () => {
   const { user, isAdmin, logout } = useAccess();
   const [menuOpen, setMenuOpen] = useState(false);
   const isAuthenticated = !!user && user.role !== 'VISITOR';
+  const logoSrc = `${process.env.PUBLIC_URL}/logo.png`;
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -15,7 +16,8 @@ const NavBar = () => {
       <div className="nav-brand-row">
         <div className="nav-brand">
           <Link to="/" onClick={closeMenu}>
-            SoccerGDL
+            <img src={logoSrc} alt="Soccer GDL" className="nav-brand-logo" />
+            <span>SoccerGDL</span>
           </Link>
         </div>
         <button

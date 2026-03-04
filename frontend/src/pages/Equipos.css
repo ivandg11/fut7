@@ -44,7 +44,7 @@
 }
 
 .no-equipos {
-  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border: 1px dashed rgba(255, 212, 71, 0.4);
   border-radius: var(--radius-lg);
   background: var(--surface);
   color: var(--text-muted);
@@ -123,7 +123,7 @@
   padding: 0.58rem 0.8rem;
   font-size: 0.86rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #111215;
   cursor: pointer;
 }
 
@@ -291,7 +291,7 @@
   padding: 0.45rem 0.7rem;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #111215;
   cursor: pointer;
   background: var(--brand);
 }

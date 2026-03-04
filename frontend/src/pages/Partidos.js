@@ -310,6 +310,7 @@ const Partidos = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
+    const logoUrl = `${window.location.origin}/logo.png`;
 
     const asistenciaMap = new Map(
       (partido.asistencias || []).map((item) => [
@@ -370,7 +371,8 @@ const Partidos = () => {
     body { margin: 0; font-family: Arial, sans-serif; color: #111; }
     .sheet { width: 100%; }
     .head { display: grid; grid-template-columns: 170px 1fr; gap: 14px; align-items: start; margin-bottom: 8px; }
-    .logo { border: 2px solid #111; border-radius: 10px; height: 120px; display: grid; place-items: center; font-weight: 800; font-size: 28px; }
+    .logo { border: 2px solid #111; border-radius: 10px; height: 120px; display: grid; place-items: center; padding: 10px; }
+    .logo img { max-height: 100%; max-width: 100%; object-fit: contain; }
     .meta { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
     .meta-box { border: 2px solid #111; min-height: 52px; }
     .meta-label { border-bottom: 2px solid #111; font-weight: 800; text-align: center; padding: 2px 4px; }
@@ -396,7 +398,7 @@ const Partidos = () => {
 <body>
   <div class="sheet">
     <div class="head">
-      <div class="logo">SOCCER<br/>GDL</div>
+      <div class="logo"><img src="${logoUrl}" alt="Soccer GDL" /></div>
       <div class="meta">
         <div class="meta-box"><div class="meta-label">DIA</div><div class="meta-value">${escapeHtml(dia)}</div></div>
         <div class="meta-box"><div class="meta-label">FECHA</div><div class="meta-value">${escapeHtml(fecha)}</div></div>

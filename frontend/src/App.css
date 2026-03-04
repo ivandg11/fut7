@@ -8,9 +8,9 @@
   --text: #f7f8fa;
   --text-muted: #a9adb5;
   --border: #2e3239;
-  --primary: #ffd447;
-  --brand: #ffd447;
-  --brand-2: #f0b90b;
+  --primary: #f7e030;
+  --brand: #f7e030;
+  --brand-2: #d8be19;
   --success: #ffe082;
   --warning: #e1a63a;
   --danger: #ff6f86;
@@ -98,7 +98,7 @@ option {
   padding: 1.15rem 1.5rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
-  background: #0b1220;
+  background: #111316;
 }
 
 .footer p {
@@ -161,7 +161,7 @@ option {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(8, 8, 9, 0.76);
   backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
@@ -205,7 +205,7 @@ option {
 }
 
 .access-modal .access-input::placeholder {
-  color: #7e95ae;
+  color: #8f949d;
 }
 
 .access-modal .access-input:focus {
@@ -230,13 +230,13 @@ option {
 }
 
 .btn-primary {
-  color: #0f172a;
+  color: #111215;
   background: linear-gradient(180deg, var(--brand), var(--brand-2));
 }
 
 .btn-secondary {
   color: var(--text);
-  background: #0b1220;
+  background: #15181c;
   border: 1px solid var(--border);
 }
 
