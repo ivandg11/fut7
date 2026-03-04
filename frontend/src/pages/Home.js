@@ -9,19 +9,19 @@ const Home = () => {
       <div className="hero-section">
         <img src={logoSrc} alt="Soccer GDL" className="hero-logo" />
         <p>
-          Opera ligas de futbol 7 con datos en tiempo real, control deportivo y
-          experiencia profesional.
+          Somos para ti la mejor opcion para desarrollar tus habilidades
+          desportivas , en un ambiente motivacional y de competencia.
         </p>
         <p>
           Implementacion inicial: <strong>Liga Pro Soccer Femenil</strong>.
         </p>
         <div className="hero-metrics">
           <article className="hero-metric-card">
-            <span className="hero-metric-label">Canchas activas</span>
+            <span className="hero-metric-label">Canchas</span>
             <strong>4</strong>
           </article>
           <article className="hero-metric-card">
-            <span className="hero-metric-label">Ventana operativa</span>
+            <span className="hero-metric-label">Dias de operacion</span>
             <strong>7 dias</strong>
           </article>
           <article className="hero-metric-card">
@@ -52,9 +52,12 @@ const Home = () => {
         <article className="info-card">
           <h3>Ubicacion</h3>
           <ul className="contacto-lista">
-            <li>Complejo SoccerGDL</li>
-            <li>Av. Mariano Otero 1450, Guadalajara, Jalisco</li>
-            <li>Referencia: cerca de Plaza del Sol</li>
+            <li>SoccerGDL</li>
+            <li>
+              Avenida Periférico Poniente Manuel Gómez Morin 6420, Paraísos del
+              Colli, 45060 Zapopan, Jal.
+            </li>
+            <li>https://maps.app.goo.gl/b8U7Zz9tDES6otXh9</li>
           </ul>
         </article>
 
