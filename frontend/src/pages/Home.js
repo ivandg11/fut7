@@ -1,11 +1,129 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './Home.css';
 
 const Home = () => {
   const logoSrc = `${process.env.PUBLIC_URL}/logo.png`;
+  const slides = [
+    {
+      src: `${process.env.PUBLIC_URL}/img/s1.jpg`,
+      alt: 'Academia de futbol Galaxy GDL',
+      title: 'Academia de Futbol Galaxy GDL',
+      description: 'Entrenamientos para ninos, adultos y porteros.',
+    },
+    {
+      src: `${process.env.PUBLIC_URL}/img/s2.jpg`,
+      alt: 'Inscripciones abiertas en Soccer GDL',
+      title: 'Inscripciones Abiertas',
+      description: 'Categorias juveniles disponibles para nueva temporada.',
+    },
+    {
+      src: `${process.env.PUBLIC_URL}/img/s3.jpg`,
+      alt: 'Promocion de inscripcion en Soccer GDL',
+      title: 'Promociones Activas',
+      description: 'Consulta disponibilidad y promociones vigentes.',
+    },
+  ];
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const touchStartX = useRef(0);
+
+  useEffect(() => {
+    if (isPaused) return undefined;
+    const interval = window.setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % slides.length);
+    }, 5500);
+    return () => window.clearInterval(interval);
+  }, [isPaused, slides.length]);
+
+  const goToSlide = (index) => {
+    setSlideIndex(index);
+  };
+
+  const goPrev = () => {
+    setSlideIndex((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const goNext = () => {
+    setSlideIndex((prev) => (prev + 1) % slides.length);
+  };
+
+  const onTouchStart = (event) => {
+    touchStartX.current = event.changedTouches[0].clientX;
+  };
+
+  const onTouchEnd = (event) => {
+    const delta = event.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) < 40) return;
+    if (delta < 0) goNext();
+    else goPrev();
+  };
 
   return (
     <div className="home-container">
+      <section
+        className="home-slider"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <div
+          className="home-slider-track"
+          style={{ transform: `translateX(-${slideIndex * 100}%)` }}
+        >
+          {slides.map((slide) => (
+            <article className="home-slide" key={slide.src}>
+              <img src={slide.src} alt={slide.alt} className="home-slide-image" />
+              <div className="home-slide-overlay" />
+              <div className="home-slide-content">
+                <p className="home-slide-kicker">Soccer GDL</p>
+                <h2>{slide.title}</h2>
+                <p>{slide.description}</p>
+                <div className="home-slide-actions">
+                  <a
+                    href="https://wa.me/523333977729"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary"
+                  >
+                    Solicitar informes
+                  </a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="home-slider-arrow left"
+          onClick={goPrev}
+          aria-label="Slide anterior"
+        >
+          &#10094;
+        </button>
+        <button
+          type="button"
+          className="home-slider-arrow right"
+          onClick={goNext}
+          aria-label="Siguiente slide"
+        >
+          &#10095;
+        </button>
+
+        <div className="home-slider-dots">
+          {slides.map((slide, index) => (
+            <button
+              type="button"
+              key={slide.src}
+              className={`home-slider-dot ${index === slideIndex ? 'active' : ''}`}
+              aria-label={`Ir al slide ${index + 1}`}
+              onClick={() => goToSlide(index)}
+            />
+          ))}
+        </div>
+      </section>
+
       <div className="hero-section">
         <img src={logoSrc} alt="Soccer GDL" className="hero-logo" />
         <p>
