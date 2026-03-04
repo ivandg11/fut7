@@ -12,9 +12,7 @@
   text-align: center;
   color: var(--text);
   background:
-    radial-gradient(circle at 14% 16%, rgba(255, 212, 71, 0.28), transparent 44%),
-    radial-gradient(circle at 88% 82%, rgba(255, 255, 255, 0.11), transparent 42%),
-    linear-gradient(135deg, #101215, #1b1f25 52%, #0f1012);
+    linear-gradient(138deg, #111317 0%, #1e2229 58%, #2c260a 100%);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
 }
@@ -32,8 +30,8 @@
   border-radius: 50%;
   right: -90px;
   top: -100px;
-  background: rgba(255, 212, 71, 0.14);
-  filter: blur(6px);
+  background: #3c3510;
+  filter: blur(2px);
 }
 
 .hero-section::after {
@@ -43,22 +41,15 @@
   left: -80px;
   bottom: -84px;
   transform: rotate(22deg);
-  background: rgba(255, 212, 71, 0.1);
-}
-
-.hero-section h1 {
-  margin: 0;
-  font-family: 'Sora', sans-serif;
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  letter-spacing: 0.6px;
+  background: #2e3118;
 }
 
 .hero-logo {
-  width: clamp(84px, 12vw, 132px);
+  width: clamp(150px, 24vw, 290px);
   height: auto;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.8rem;
   object-fit: contain;
-  filter: drop-shadow(0 10px 24px rgba(247, 224, 48, 0.32));
+  filter: drop-shadow(0 12px 26px rgba(247, 224, 48, 0.4));
 }
 
 .hero-kicker {

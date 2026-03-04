@@ -8,7 +8,6 @@ const Home = () => {
     <div className="home-container">
       <div className="hero-section">
         <img src={logoSrc} alt="Soccer GDL" className="hero-logo" />
-        <h1>SoccerGDL</h1>
         <p>
           Opera ligas de futbol 7 con datos en tiempo real, control deportivo y
           experiencia profesional.
