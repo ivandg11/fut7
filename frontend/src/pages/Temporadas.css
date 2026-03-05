@@ -52,7 +52,13 @@
   gap: 0.22rem;
 }
 
-.liga-edit-inline input {
+.liga-edit-inline {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.liga-edit-inline input,
+.liga-edit-inline select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -62,7 +68,8 @@
   color: var(--text);
 }
 
-.liga-edit-inline input:focus {
+.liga-edit-inline input:focus,
+.liga-edit-inline select:focus {
   outline: 2px solid rgba(255, 212, 71, 0.3);
   border-color: var(--brand);
 }

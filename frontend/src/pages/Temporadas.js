@@ -11,7 +11,13 @@ import './Temporadas.css';
 const Temporadas = () => {
   const { isAdmin, role } = useAccess();
   const canCreateLeague = role === 'SUPER_ADMIN';
-  const canEditLeagueName = role === 'SUPER_ADMIN';
+  const canEditLeague = role === 'SUPER_ADMIN' || role === 'admin';
+  const leagueTypeOptions = [
+    { value: 'VARONIL', label: 'Varonil' },
+    { value: 'FEMENIL', label: 'Femenil' },
+    { value: 'INFANTIL', label: 'Infantil' },
+    { value: 'MIXTA', label: 'Mixta' },
+  ];
   const {
     ligas,
     ligaActual,
@@ -35,6 +41,7 @@ const Temporadas = () => {
   const [expandedLigaId, setExpandedLigaId] = useState(null);
   const [editingLigaId, setEditingLigaId] = useState(null);
   const [editingLigaNombre, setEditingLigaNombre] = useState('');
+  const [editingLigaTipo, setEditingLigaTipo] = useState('VARONIL');
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
@@ -84,6 +91,7 @@ const Temporadas = () => {
       if (editingLigaId === ligaId) {
         setEditingLigaId(null);
         setEditingLigaNombre('');
+        setEditingLigaTipo('VARONIL');
       }
       setOk('Liga eliminada.');
     } catch (err) {
@@ -136,6 +144,7 @@ const Temporadas = () => {
   const abrirEdicionLiga = (liga) => {
     setEditingLigaId(liga.id);
     setEditingLigaNombre(liga.nombre);
+    setEditingLigaTipo(liga.tipo);
     setError('');
     setOk('');
   };
@@ -143,6 +152,7 @@ const Temporadas = () => {
   const cancelarEdicionLiga = () => {
     setEditingLigaId(null);
     setEditingLigaNombre('');
+    setEditingLigaTipo('VARONIL');
   };
 
   const guardarEdicionLiga = async (ligaId) => {
@@ -156,9 +166,9 @@ const Temporadas = () => {
     setOk('');
     setBusyId(`liga-edit-${ligaId}`);
     try {
-      await ligasAPI.update(ligaId, { nombre });
+      await ligasAPI.update(ligaId, { nombre, tipo: editingLigaTipo });
       await cargarLigas();
-      setOk('Nombre de liga actualizado.');
+      setOk('Liga actualizada.');
       cancelarEdicionLiga();
     } catch (err) {
       setError(extractApiErrorMessage(err));
@@ -229,7 +239,7 @@ const Temporadas = () => {
                   className={`liga-card ${isCurrent ? 'seleccionada' : ''}`}
                 >
                   <div className="liga-info">
-                    {isEditingLiga && canEditLeagueName ? (
+                    {isEditingLiga && canEditLeague ? (
                       <div className="liga-edit-inline">
                         <input
                           value={editingLigaNombre}
@@ -247,6 +257,16 @@ const Temporadas = () => {
                             }
                           }}
                         />
+                        <select
+                          value={editingLigaTipo}
+                          onChange={(e) => setEditingLigaTipo(e.target.value)}
+                        >
+                          {leagueTypeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     ) : (
                       <h4>{liga.nombre}</h4>
@@ -265,17 +285,17 @@ const Temporadas = () => {
                     >
                       Ver temporadas
                     </button>
-                    {canEditLeagueName && !isEditingLiga && (
+                    {canEditLeague && !isEditingLiga && (
                       <button
                         type="button"
                         className="btn-secondary"
                         disabled={busyId === `liga-${liga.id}`}
                         onClick={() => abrirEdicionLiga(liga)}
                       >
-                        Editar nombre
+                        Editar liga
                       </button>
                     )}
-                    {canEditLeagueName && isEditingLiga && (
+                    {canEditLeague && isEditingLiga && (
                       <>
                         <button
                           type="button"
@@ -434,10 +454,11 @@ const Temporadas = () => {
                   value={ligaTipo}
                   onChange={(e) => setLigaTipo(e.target.value)}
                 >
-                  <option value="VARONIL">Varonil</option>
-                  <option value="FEMENIL">Femenil</option>
-                  <option value="INFANTIL">Infantil</option>
-                  <option value="MIXTA">Mixta</option>
+                  {leagueTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <button type="submit" className="btn-primary">
