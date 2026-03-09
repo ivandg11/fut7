@@ -14,15 +14,16 @@ const Home = () => {
     {
       src: `${process.env.PUBLIC_URL}/img/s1.jpg`,
       alt: 'Publicidad Soccer GDL 1',
-      title: 'Torneos semanales',
-      description: 'Jornadas activas de futbol 7 con roles y arbitraje.',
+      title: 'Club Galaxy',
+      description:
+        'Pregunta por tu clase gratis y sin ningún compromiso para conocer nuestro trabajo.',
     },
     {
       src: `${process.env.PUBLIC_URL}/img/s2.jpg`,
       alt: 'Publicidad Soccer GDL 2',
-      title: 'Entrenamientos',
+      title: '',
       description:
-        'Espacios disponibles para practica y trabajo por categorias.',
+        'Vivamos la pasion por el futbol! Categorías juveniles e infantiles, inscribe tu equipo hoy mismo ',
     },
     {
       src: `${process.env.PUBLIC_URL}/img/s3.jpg`,
@@ -112,21 +113,21 @@ const Home = () => {
                 }}
                 aria-label="Voltear slide para ver informacion"
               >
-                <span className="home-slide-inner">
-                  <span className="home-slide-face home-slide-front">
+                <div className="home-slide-inner">
+                  <div className="home-slide-face home-slide-front">
                     <img
                       src={slide.src}
                       alt={slide.alt}
                       className="home-slide-image"
                     />
-                  </span>
-                  <span className="home-slide-face home-slide-back">
-                    <span className="home-slide-back-kicker">Info</span>
+                  </div>
+                  <div className="home-slide-face home-slide-back">
+                    <div className="home-slide-back-kicker">Info</div>
                     <h4>{slide.title}</h4>
                     <p>{slide.description}</p>
                     <small>Click para volver</small>
-                  </span>
-                </span>
+                  </div>
+                </div>
               </button>
             </article>
           ))}
